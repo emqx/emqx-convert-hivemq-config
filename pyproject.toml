@@ -1,0 +1,12 @@
+[project]
+name = "emqx-import-hive-config"
+version = "0.1.0"
+description = "A tool to transform HiveMQ config to EMQX format"
+readme = "README.md"
+requires-python = ">=3.11.11"
+dependencies = ["pyhocon"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.10",
+]
