@@ -1,4 +1,4 @@
-import sys
+import logging
 from mappers.base_mapper import BaseMapper
 from utils.xml import get_text_from_element
 from pyhocon.config_tree import ConfigList
@@ -33,9 +33,8 @@ class ClusterMapper(BaseMapper):
 
         transport = cluster_element.find("transport")
         if transport is not None and transport.find("tcp") is not None:
-            print(
-                "[Warning] TCP transport settings for clustering are not directly convertible. EMQX uses Erlang distribution for node communication. Please review your EMQX node and networking setup.",
-                file=sys.stderr,
+            logging.warning(
+                "TCP transport settings for clustering are not directly convertible. EMQX uses Erlang distribution for node communication. Please review your EMQX node and networking setup."
             )
 
         return {"cluster": cluster_config}

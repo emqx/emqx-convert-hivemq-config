@@ -2,6 +2,7 @@ import argparse
 import xml.etree.ElementTree as ET
 import sys
 import re
+import logging
 from pyhocon import ConfigFactory, HOCONConverter
 
 from converter import HiveMQToEMQXConverter
@@ -12,7 +13,7 @@ def parse_xml(file_path):
         tree = ET.parse(file_path)
         return tree.getroot()
     except ET.ParseError as e:
-        print(f"Error parsing XML file: {e}", file=sys.stderr)
+        logging.error(f"Error parsing XML file: {e}")
         return None
 
 
@@ -47,6 +48,10 @@ def main():
     parser.add_argument("input_file", help="Path to the HiveMQ XML configuration file.")
     args = parser.parse_args()
 
+    logging.basicConfig(
+        level=logging.INFO, format="[%(levelname)s] %(message)s", stream=sys.stderr
+    )
+
     root = parse_xml(args.input_file)
     if root is None:
         return
@@ -63,7 +68,8 @@ def main():
         if "cluster" in emqx_config_dict:
             hocon_config = post_process_hocon(hocon_config)
 
-        print(hocon_config)
+        # Print the final HOCON output to stdout
+        sys.stdout.write(hocon_config)
 
 
 if __name__ == "__main__":

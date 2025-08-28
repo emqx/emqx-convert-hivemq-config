@@ -1,4 +1,4 @@
-import sys
+import logging
 import math
 from mappers.base_mapper import BaseMapper
 from utils.xml import get_text_from_element
@@ -16,9 +16,7 @@ class MqttMapper(BaseMapper):
                 mqtt_config["max_mqueue_len"] = int(max_queue_size)
             strategy = get_text_from_element(queued_messages, "strategy")
             if strategy and strategy not in ["discard", "discard-oldest"]:
-                print(
-                    f"[Warning] Unsupported queue strategy: {strategy}", file=sys.stderr
-                )
+                logging.warning(f"Unsupported queue strategy: {strategy}")
 
         # Topic Alias
         topic_alias = mqtt_element.find("topic-alias")
@@ -36,9 +34,8 @@ class MqttMapper(BaseMapper):
         if message_expiry is not None:
             max_interval = get_text_from_element(message_expiry, "max-interval")
             if max_interval:
-                print(
-                    "[Warning] Limiting message expiry interval for MQTTv5 publishers is not supported.",
-                    file=sys.stderr,
+                logging.warning(
+                    "Limiting message expiry interval for MQTTv5 publishers is not supported."
                 )
                 mqtt_config["message_expiry_interval"] = f"{max_interval}s"
 
@@ -57,9 +54,8 @@ class MqttMapper(BaseMapper):
             if allow_unlimited == "false" or (
                 max_keep_alive and max_keep_alive != "65535"
             ):
-                print(
-                    "[Warning] Limiting MQTT client keep-alive interval is not supported.",
-                    file=sys.stderr,
+                logging.warning(
+                    "Limiting MQTT client keep-alive interval is not supported."
                 )
 
         # Packets
@@ -76,10 +72,7 @@ class MqttMapper(BaseMapper):
         # Receive Maximum
         receive_maximum = mqtt_element.find("receive-maximum")
         if receive_maximum is not None:
-            print(
-                "[Warning] Limiting Server Receive Maximum is not supported.",
-                file=sys.stderr,
-            )
+            logging.warning("Limiting Server Receive Maximum is not supported.")
 
         # Quality of Service
         quality_of_service = mqtt_element.find("quality-of-service")
@@ -107,9 +100,8 @@ class MqttMapper(BaseMapper):
         if subscription_identifier is not None:
             enabled = get_text_from_element(subscription_identifier, "enabled")
             if enabled == "false":
-                print(
-                    "[Warning] Restricting MQTTv5 Subscription Identifiers is not supported.",
-                    file=sys.stderr,
+                logging.warning(
+                    "Restricting MQTTv5 Subscription Identifiers is not supported."
                 )
 
         # Retained Messages

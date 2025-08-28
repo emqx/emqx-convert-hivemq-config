@@ -1,4 +1,4 @@
-import sys
+import logging
 from mappers.base_mapper import BaseMapper
 from utils.xml import get_text_from_element
 from utils.certs import map_tls_settings
@@ -68,10 +68,7 @@ class WebSocketListenerMapper(BaseMapper):
 
         allow_extensions = get_text_from_element(listener_element, "allow-extensions")
         if allow_extensions and allow_extensions == "true":
-            print(
-                "[Warning] Configuring WebSocket extensions is not supported.",
-                file=sys.stderr,
-            )
+            logging.warning("Configuring WebSocket extensions is not supported.")
 
         return {
             "listeners": {
@@ -113,10 +110,7 @@ class TLSWebSocketListenerMapper(BaseMapper):
 
         allow_extensions = get_text_from_element(listener_element, "allow-extensions")
         if allow_extensions and allow_extensions == "true":
-            print(
-                "[Warning] Configuring WebSocket extensions is not supported.",
-                file=sys.stderr,
-            )
+            logging.warning("Configuring WebSocket extensions is not supported.")
 
         config = {
             "enable": True,

@@ -1,6 +1,6 @@
 import subprocess
 import shutil
-import sys
+import logging
 
 
 def run_command(args):
@@ -9,14 +9,11 @@ def run_command(args):
         process = subprocess.run(args, check=True, capture_output=True, text=True)
         return process.stdout
     except subprocess.CalledProcessError as e:
-        print(
-            f"""Error running command: {" ".join(args)}
-{e.stderr}""",
-            file=sys.stderr,
-        )
+        logging.error(f"""Error running command: {" ".join(args)}
+{e.stderr}""")
         return None
     except FileNotFoundError:
-        print(f"Error: command not found: {args[0]}", file=sys.stderr)
+        logging.error(f"Error: command not found: {args[0]}")
         return None
 
 

@@ -1,6 +1,6 @@
 import os
 import re
-import sys
+import logging
 from utils.shell import run_command, check_command_exists
 from utils.xml import get_text_from_element
 
@@ -26,14 +26,12 @@ def map_tls_settings(tls_element, listener_slug):
     keystore = tls_element.find("keystore")
     if keystore is not None:
         if not check_command_exists("keytool") or not check_command_exists("openssl"):
-            print(
-                "[Warning] `keytool` or `openssl` not found. Cannot convert JKS files.",
-                file=sys.stderr,
+            logging.warning(
+                "`keytool` or `openssl` not found. Cannot convert JKS files."
             )
             path = get_text_from_element(keystore, "path")
-            print(
-                f"[Warning] Keystore conversion from {path} is not implemented yet. Please convert JKS to PEM format manually.",
-                file=sys.stderr,
+            logging.warning(
+                f"Keystore conversion from {path} is not implemented yet. Please convert JKS to PEM format manually."
             )
             ssl_options["keyfile"] = f"{base_dir}/{listener_slug}/key.pem"
             ssl_options["certfile"] = f"{base_dir}/{listener_slug}/cert.pem"
@@ -60,9 +58,8 @@ def map_tls_settings(tls_element, listener_slug):
                 if aliases:
                     alias = aliases[0]
                     if len(aliases) > 1:
-                        print(
-                            f"[Warning] Multiple aliases found in keystore, using '{alias}'.",
-                            file=sys.stderr,
+                        logging.warning(
+                            f"Multiple aliases found in keystore, using '{alias}'."
                         )
 
             if alias:
@@ -119,9 +116,8 @@ def map_tls_settings(tls_element, listener_slug):
                 ]
                 run_command(openssl_cert_cmd)
 
-                print(
-                    f"Extracted private key and certificate from {keystore_path} into {output_dir}.",
-                    file=sys.stderr,
+                logging.info(
+                    f"Extracted private key and certificate from {keystore_path} into {output_dir}."
                 )
                 ssl_options["keyfile"] = os.path.join(
                     base_dir, listener_slug, "key.pem"
@@ -132,19 +128,13 @@ def map_tls_settings(tls_element, listener_slug):
                 if pkey_pass:
                     ssl_options["password"] = pkey_pass
             else:
-                print(
-                    f"[Error] Could not determine alias for keystore {keystore_path}",
-                    file=sys.stderr,
-                )
+                logging.error(f"Could not determine alias for keystore {keystore_path}")
 
     # Truststore
     truststore = tls_element.find("truststore")
     if truststore is not None:
         if not check_command_exists("keytool"):
-            print(
-                "[Warning] `keytool` not found. Cannot convert JKS truststore.",
-                file=sys.stderr,
-            )
+            logging.warning("`keytool` not found. Cannot convert JKS truststore.")
         else:
             truststore_path = get_text_from_element(truststore, "path")
             truststore_pass = get_text_from_element(truststore, "password") or ""
@@ -165,9 +155,8 @@ def map_tls_settings(tls_element, listener_slug):
                 with open(cacert_pem_path, "w") as f:
                     f.write(cacert_pem_content)
 
-                print(
-                    f"Extracted CA certificates from {truststore_path} into {output_dir}.",
-                    file=sys.stderr,
+                logging.info(
+                    f"Extracted CA certificates from {truststore_path} into {output_dir}."
                 )
                 ssl_options["cacertfile"] = os.path.join(
                     base_dir, listener_slug, "cacert.pem"
