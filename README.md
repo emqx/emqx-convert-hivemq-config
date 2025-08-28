@@ -31,19 +31,21 @@ uv run src/main.py <path-to-hivemq-xml-file>
 
 ### Example
 
-In the `conf` directory we extracted configuration examples from the official HiveMQ docker image.
+We extracted configuration examples from the official HiveMQ docker image into `conf` and `extensions` directories.
 
 ```bash
 uv run src/main.py conf/examples/configuration/config-sample-mqtt.xml
+uv run src/main.py extensions/hivemq-kafka-extension/conf/examples/config.xml
 ```
 
-This will output the converted EMQX HOCON configuration to the console.
+These will output the converted EMQX HOCON configuration to the console.
 
 ```bash
 uv run src/main.py conf/examples/configuration/config-sample-mqtt.xml > emqx.hocon
+uv run src/main.py extensions/hivemq-kafka-extension/conf/examples/config.xml > emqx.hocon
 ```
 
-This command will save the output to `emqx.hocon`.
+These commands will save the output to `emqx.hocon`.
 
 ## Testing the Generated Configuration
 
