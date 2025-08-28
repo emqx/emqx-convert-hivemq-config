@@ -1,2 +1,4 @@
-/import/ssl/*/*.pem
+/etc/emqx/ssl/*/*.pem
+/etc/emqx/ssl/*/*.p12
 /*.hocon
+__pycache__

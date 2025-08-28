@@ -26,16 +26,24 @@ uv sync
 To convert a configuration file, run the `main.py` script, passing the path to your HiveMQ XML file as an argument.
 
 ```bash
-uv run main.py <path-to-hivemq-xml-file>
+uv run src/main.py <path-to-hivemq-xml-file>
 ```
 
 ### Example
 
+In the `conf` directory we extracted configuration examples from the official HiveMQ docker image.
+
 ```bash
-uv run main.py hmq-config-examples/config-sample-mqtt.xml
+uv run src/main.py conf/examples/configuration/config-sample-mqtt.xml
 ```
 
-The script will output the converted EMQX HOCON configuration to the console.
+This will output the converted EMQX HOCON configuration to the console.
+
+```bash
+uv run src/main.py conf/examples/configuration/config-sample-mqtt.xml > emqx.hocon
+```
+
+This command will save the output to `emqx.hocon`.
 
 ## Testing the Generated Configuration
 
@@ -50,14 +58,14 @@ You can test the generated configuration using the official EMQX Docker image.
 #### Run the EMQX Docker Container with empty base.hocon
 
 Create an empty `base.hocon` file, and run the `emqx/emqx-enterprise:5.10.0` Docker image.
-Mount `import/ssl` directory, the script will generate certificates if required by the source config, and save them there.
+Mount `./etc/emqx/ssl` directory, the script will generate certificates if required by the source config, and save them there.
 
 ```bash
 rm -f base.hocon; touch base.hocon
 docker run -d --name emqx-test \
   -p 1883:1883 -p 8883:8883 -p 8083:8083 -p 8084:8084 -p 18083:18083 \
   -v $(pwd)/base.hocon:/opt/emqx/etc/base.hocon:ro \
-  -v $(pwd)/import/ssl:/etc/emqx/ssl:ro \
+  -v $(pwd)/etc/emqx/ssl:/etc/emqx/ssl:ro \
   emqx/emqx-enterprise:5.10.0
 ```
 *Note: The `-p` flags map the default EMQX ports to your host machine. Adjust them if your configuration uses different ports.*
@@ -70,7 +78,7 @@ First, run the converter and save the output to a file named `emqx.conf`. For ex
 uv run main.py hmq-config-examples/tls/config-sample-mqtt-tls.xml > base.hocon
 ```
 
-This will also generate the necessary certificate files in the `import/ssl/` directory.
+This will also generate the necessary certificate files in the `./etc/emqx/ssl/` directory.
 
 #### Validate the config
 
@@ -84,12 +92,8 @@ If everything is good, this command will not print anything.
 You can then trigger config reload to further validate correctness of TLS configuration, data integrations, etc.
 
 ```bash
-docker exec -it emqx-test emqx ctl conf reload --replace
-```
-
-This command should print something like this:
-```bash
-load dashboard on 'emqx@172.17.0.2' ok
+docker exec -it emqx-test emqx ctl conf load --replace /opt/emqx/etc/base.hocon
+load listeners on cluster ok
 ```
 
 #### Verify Listeners
