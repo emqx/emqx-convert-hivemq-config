@@ -75,7 +75,7 @@ docker run -d --name emqx-test \
 First, run the converter and save the output to a file named `emqx.conf`. For example, using the TLS sample configuration:
 
 ```bash
-uv run main.py hmq-config-examples/tls/config-sample-mqtt-tls.xml > base.hocon
+uv run main.py conf/examples/configuration/tls/config-sample-mqtt-tls.xml > base.hocon
 ```
 
 This will also generate the necessary certificate files in the `./etc/emqx/ssl/` directory.
@@ -137,12 +137,12 @@ To test a listener with client authentication set to `REQUIRED`, you need to pro
 First, generate the configuration using an example that requires client authentication, like `config-sample-mqtt-tls-client-auth.xml`:
 
 ```bash
-uv run main.py hmq-config-examples/tls/config-sample-mqtt-tls-client-auth.xml > base.hocon
+uv run main.py conf/examples/configuration/tls/config-sample-mqtt-tls-client-auth.xml > base.hocon
 ```
 
 Then, start the EMQX container as described before.
 
-To connect, you will need a client certificate (`client.pem`) and a private key (`client.key`). The certificate must be trusted by the CA certificates configured in the server's truststore (`hmq-config-examples/tls/truststore.jks`).
+To connect, you will need a client certificate (`client.pem`) and a private key (`client.key`). The certificate must be trusted by the CA certificates configured in the server's truststore (`conf/examples/configuration/tls/truststore.jks`).
 
 The `openssl` command is as follows:
 ```bash
