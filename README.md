@@ -47,6 +47,21 @@ You can test the generated configuration using the official EMQX Docker image.
 
 ### Steps
 
+#### Run the EMQX Docker Container with empty base.hocon
+
+Create an empty `base.hocon` file, and run the `emqx/emqx-enterprise:5.10.0` Docker image.
+Mount `import/ssl` directory, the script will generate certificates if required by the source config, and save them there.
+
+```bash
+rm -f base.hocon; touch base.hocon
+docker run -d --name emqx-test \
+  -p 1883:1883 -p 8883:8883 -p 8083:8083 -p 8084:8084 -p 18083:18083 \
+  -v $(pwd)/base.hocon:/opt/emqx/etc/base.hocon:ro \
+  -v $(pwd)/import/ssl:/etc/emqx/ssl:ro \
+  emqx/emqx-enterprise:5.10.0
+```
+*Note: The `-p` flags map the default EMQX ports to your host machine. Adjust them if your configuration uses different ports.*
+
 #### Generate the EMQX Configuration File
 
 First, run the converter and save the output to a file named `emqx.conf`. For example, using the TLS sample configuration:
@@ -57,32 +72,29 @@ uv run main.py hmq-config-examples/tls/config-sample-mqtt-tls.xml > base.hocon
 
 This will also generate the necessary certificate files in the `import/ssl/` directory.
 
-#### Run the EMQX Docker Container
+#### Validate the config
 
-Now, run the `emqx/emqx-enterprise:5.10.0` Docker image. You'll need to mount the `emqx.conf` file and the generated certificates into the container.
-
-```bash
-docker run -d --name emqx-test \
-  -p 1883:1883 -p 8883:8883 -p 8083:8083 -p 8084:8084 -p 18083:18083 \
-  -v $(pwd)/base.hocon:/opt/emqx/etc/base.hocon:ro \
-  -v $(pwd)/import/ssl:/etc/emqx/ssl:ro \
-  emqx/emqx-enterprise:5.10.0
-```
-*Note: The `-p` flags map the default EMQX ports to your host machine. Adjust them if your configuration uses different ports.*
-
-#### Verify EMQX Startup
-
-Check the container logs to ensure that EMQX has started successfully.
+Run `emqx check_config` in the running emqx container to validate configuration.
 
 ```bash
-docker logs -f emqx-test
+docker exec -it emqx-test emqx check_config
 ```
 
-Look for a log entry like `EMQX 5.10.0 is running`. Press `Ctrl+C` to exit the logs.
+If everything is good, this command will not print anything.
+You can then trigger config reload to further validate correctness of TLS configuration, data integrations, etc.
 
-#### Verify the Configuration
+```bash
+docker exec -it emqx-test emqx ctl conf reload --replace
+```
 
-Once the container is running, you can test the listener functionality.
+This command should print something like this:
+```bash
+load dashboard on 'emqx@172.17.0.2' ok
+```
+
+#### Verify Listeners
+
+Once the container is running with new configuration, you can test the listener functionality.
 
 To test a TCP listener on port 1883 you can use [mqttx](https://mqttx.app/downloads) tool:
 
