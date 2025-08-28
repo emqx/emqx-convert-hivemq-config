@@ -7,6 +7,7 @@ from mappers.listeners import (
 )
 from mappers.mqtt import MqttMapper
 from mappers.restrictions import RestrictionsMapper
+from mappers.cluster import ClusterMapper
 
 
 class HiveMQToEMQXConverter:
@@ -18,6 +19,7 @@ class HiveMQToEMQXConverter:
             "tls-websocket-listener": TLSWebSocketListenerMapper(),
             "mqtt": MqttMapper(),
             "restrictions": RestrictionsMapper(),
+            "cluster": ClusterMapper(),
         }
 
     def convert(self, root):
@@ -37,6 +39,13 @@ class HiveMQToEMQXConverter:
             if mapper:
                 mqtt_config = mapper.map(mqtt)
                 deep_merge(mqtt_config, config)
+
+        cluster = root.find("cluster")
+        if cluster is not None:
+            mapper = self.mappers.get("cluster")
+            if mapper:
+                cluster_config = mapper.map(cluster)
+                deep_merge(cluster_config, config)
 
         restrictions = root.find("restrictions")
         if restrictions is not None:
