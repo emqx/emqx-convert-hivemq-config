@@ -15,7 +15,7 @@
             <mqtt-topic-filters>
                 <mqtt-topic-filter>#</mqtt-topic-filter>
             </mqtt-topic-filters>
-            <kafka-topic>kafka-topic</kafka-topic>
+            <kafka-topic>emqx</kafka-topic>
         </mqtt-to-kafka-mapping>
     </mqtt-to-kafka-mappings>
 

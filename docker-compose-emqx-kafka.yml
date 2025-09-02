@@ -9,6 +9,8 @@ services:
     ports:
       - "1883:1883"
       - "18083:18083"
+    environment:
+      EMQX_DASHBOARD__DEFAULT_PASSWORD: 'admin'
     volumes:
       - ./base.hocon:/opt/emqx/etc/base.hocon:ro
       - ./etc/emqx/ssl:/etc/emqx/ssl:ro
@@ -60,6 +62,7 @@ services:
       echo -e 'Creating kafka topics'
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka.emqx.io:9092 --create --if-not-exists --topic topic1 --replication-factor 1 --partitions 1
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka.emqx.io:9092 --create --if-not-exists --topic topic2 --replication-factor 1 --partitions 1
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka.emqx.io:9092 --create --if-not-exists --topic emqx --replication-factor 1 --partitions 1
       echo -e 'Successfully created the following topics:'
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka.emqx.io:9092 --list
       "
