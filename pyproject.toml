@@ -4,7 +4,11 @@ version = "0.1.0"
 description = "A tool to transform HiveMQ config to EMQX format"
 readme = "README.md"
 requires-python = ">=3.11.11"
-dependencies = ["pyhocon"]
+dependencies = [
+    "pyhocon",
+    "flask>=3.0.0",
+    "werkzeug>=3.0.0"
+]
 
 [dependency-groups]
 dev = [

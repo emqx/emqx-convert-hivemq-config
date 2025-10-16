@@ -23,7 +23,26 @@ uv sync
 
 ## Usage
 
-To convert a configuration file, run the `main.py` script, passing the path to your HiveMQ XML file as an argument.
+### Web Interface (Recommended)
+
+The easiest way to use the converter is through the web interface:
+
+1. Start the web server:
+```bash
+uv run run_web.py
+```
+
+2. Open your browser and go to: http://localhost:8080
+
+3. Either upload a HiveMQ XML file or paste the XML content directly
+
+4. Click "Convert to EMQX HOCON" to get the converted configuration
+
+5. Copy the result or download it as a `.hocon` file
+
+### Command Line Interface
+
+To convert a configuration file from the command line, run the `main.py` script, passing the path to your HiveMQ XML file as an argument.
 
 ```bash
 uv run src/main.py <path-to-hivemq-xml-file>
