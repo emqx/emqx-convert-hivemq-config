@@ -1,0 +1,14 @@
+name = "hivemq-to-emqx-converter"
+main = "dist/worker.js"
+compatibility_date = "2024-01-01"
+
+[env.production]
+name = "hivemq-to-emqx-converter"
+
+# Uncomment and configure for authentication
+# [[env.production.routes]]
+# pattern = "converter.yourdomain.com/*"
+# custom_domain = true
+
+# [env.production.vars]
+# AUTH_SECRET = "your-auth-secret-here"

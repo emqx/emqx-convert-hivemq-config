@@ -2,3 +2,5 @@
 /etc/emqx/ssl/*/*.p12
 /*.hocon
 __pycache__
+/node_modules/
+/dist/
