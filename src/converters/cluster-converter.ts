@@ -10,7 +10,7 @@ export class ClusterConverter extends BaseConverter {
     const cluster = config.hivemq.cluster;
     const clusterConfig: ClusterEMQXConfig = {
       discovery_strategy: 'static',
-      static: { seeds: [] }
+      static: { seeds: [] },
     };
 
     if (!cluster.discovery?.static) {
@@ -19,7 +19,7 @@ export class ClusterConverter extends BaseConverter {
 
     const staticConfig = cluster.discovery.static;
     const staticEnabled = this.getTextContent(staticConfig, 'enabled');
-    
+
     if (staticEnabled !== 'true') {
       return {};
     }
@@ -27,7 +27,9 @@ export class ClusterConverter extends BaseConverter {
 
     // Handle seeds array
     if (staticConfig.seeds?.seed) {
-      const seedArray = Array.isArray(staticConfig.seeds.seed) ? staticConfig.seeds.seed : [staticConfig.seeds.seed];
+      const seedArray = Array.isArray(staticConfig.seeds.seed)
+        ? staticConfig.seeds.seed
+        : [staticConfig.seeds.seed];
       for (const seed of seedArray) {
         const seedValue = this.getTextContent(seed, '') || seed;
         if (seedValue) {
@@ -38,7 +40,9 @@ export class ClusterConverter extends BaseConverter {
 
     // Handle individual nodes (fallback)
     if (staticConfig.node) {
-      const nodeArray = Array.isArray(staticConfig.node) ? staticConfig.node : [staticConfig.node];
+      const nodeArray = Array.isArray(staticConfig.node)
+        ? staticConfig.node
+        : [staticConfig.node];
       for (const node of nodeArray) {
         const host = this.getTextContent(node, 'host');
         if (host) {
@@ -55,7 +59,9 @@ export class ClusterConverter extends BaseConverter {
 
     // Warn about TCP transport settings
     if (cluster.transport?.tcp) {
-      console.warn('TCP transport settings for clustering are not directly convertible. EMQX uses Erlang distribution for node communication. Please review your EMQX node and networking setup.');
+      console.warn(
+        'TCP transport settings for clustering are not directly convertible. EMQX uses Erlang distribution for node communication. Please review your EMQX node and networking setup.'
+      );
     }
 
     return { cluster: clusterConfig };

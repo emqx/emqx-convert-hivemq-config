@@ -13,13 +13,19 @@ export class RestrictionsConverter extends BaseConverter {
 
     // Max Connections
     const maxConnectionsValue = restrictions['max-connections'];
-    if (maxConnectionsValue !== undefined && Number(maxConnectionsValue) !== -1) {
+    if (
+      maxConnectionsValue !== undefined &&
+      Number(maxConnectionsValue) !== -1
+    ) {
       maxConnections = Number(maxConnectionsValue);
     }
 
     // Max Client ID Length
     const maxClientIdLengthValue = restrictions['max-client-id-length'];
-    if (maxClientIdLengthValue !== undefined && Number(maxClientIdLengthValue) !== 65535) {
+    if (
+      maxClientIdLengthValue !== undefined &&
+      Number(maxClientIdLengthValue) !== 65535
+    ) {
       if (!result.mqtt) {
         result.mqtt = {};
       }
@@ -27,8 +33,12 @@ export class RestrictionsConverter extends BaseConverter {
     }
 
     // Incoming Bandwidth Throttling
-    const bandwidthThrottlingValue = restrictions['incoming-bandwidth-throttling'];
-    if (bandwidthThrottlingValue !== undefined && Number(bandwidthThrottlingValue) !== 0) {
+    const bandwidthThrottlingValue =
+      restrictions['incoming-bandwidth-throttling'];
+    if (
+      bandwidthThrottlingValue !== undefined &&
+      Number(bandwidthThrottlingValue) !== 0
+    ) {
       if (!result.mqtt) {
         result.mqtt = {};
       }

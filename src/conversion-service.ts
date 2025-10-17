@@ -17,19 +17,20 @@ export class ConversionService {
     try {
       // Parse XML
       const hivemqConfig = this.xmlParser.parse(xmlContent);
-      
+
       // Convert to EMQX config
       const emqxConfig = this.converter.convert(hivemqConfig);
-      
+
       // Generate HOCON
       let hocon = this.hoconGenerator.generate(emqxConfig);
-      
+
       // Post-process for proper formatting
       // hocon = this.hoconGenerator.postProcess(hocon);
-      
+
       return { hocon };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown conversion error';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown conversion error';
       return { hocon: '', error: errorMessage };
     }
   }

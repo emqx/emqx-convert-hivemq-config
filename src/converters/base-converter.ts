@@ -2,11 +2,19 @@ import { HiveMQConfig, EMQXConfig } from '../types.js';
 
 export abstract class BaseConverter {
   abstract convert(config: HiveMQConfig): EMQXConfig;
-  
+
   protected deepMerge(target: any, source: any): any {
     for (const key in source) {
-      if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
-        if (!target[key] || typeof target[key] !== 'object' || Array.isArray(target[key])) {
+      if (
+        source[key] &&
+        typeof source[key] === 'object' &&
+        !Array.isArray(source[key])
+      ) {
+        if (
+          !target[key] ||
+          typeof target[key] !== 'object' ||
+          Array.isArray(target[key])
+        ) {
           target[key] = {};
         }
         this.deepMerge(target[key], source[key]);
@@ -27,7 +35,9 @@ export abstract class BaseConverter {
     if (!element || !element[tagName]) return [];
     const items = element[tagName];
     if (Array.isArray(items)) {
-      return items.map(item => typeof item === 'string' ? item.trim() : '').filter(Boolean);
+      return items
+        .map((item) => (typeof item === 'string' ? item.trim() : ''))
+        .filter(Boolean);
     }
     return typeof items === 'string' ? [items.trim()] : [];
   }
