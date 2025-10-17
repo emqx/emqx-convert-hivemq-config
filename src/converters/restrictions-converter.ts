@@ -9,48 +9,57 @@ export class RestrictionsConverter extends BaseConverter {
 
     const restrictions = config.hivemq.restrictions;
     const result: EMQXConfig = {};
+    const warnings: string[] = [];
     let maxConnections: number | undefined;
 
     // Max Connections
     const maxConnectionsValue = restrictions['max-connections'];
-    if (
-      maxConnectionsValue !== undefined &&
-      Number(maxConnectionsValue) !== -1
-    ) {
-      maxConnections = Number(maxConnectionsValue);
+    if (maxConnectionsValue !== undefined) {
+      if (Number(maxConnectionsValue) === -1) {
+        warnings.push('Max connections is set to unlimited (-1). EMQX will use its default connection limits.');
+      } else {
+        maxConnections = Number(maxConnectionsValue);
+      }
     }
 
     // Max Client ID Length
     const maxClientIdLengthValue = restrictions['max-client-id-length'];
-    if (
-      maxClientIdLengthValue !== undefined &&
-      Number(maxClientIdLengthValue) !== 65535
-    ) {
-      if (!result.mqtt) {
-        result.mqtt = {};
+    if (maxClientIdLengthValue !== undefined) {
+      if (Number(maxClientIdLengthValue) === 65535) {
+        warnings.push('Max client ID length is set to unlimited (65535). EMQX will use its default client ID length limits.');
+      } else {
+        if (!result.mqtt) {
+          result.mqtt = {};
+        }
+        result.mqtt.max_clientid_len = Number(maxClientIdLengthValue);
       }
-      result.mqtt.max_clientid_len = Number(maxClientIdLengthValue);
     }
 
     // Incoming Bandwidth Throttling
     const bandwidthThrottlingValue =
       restrictions['incoming-bandwidth-throttling'];
-    if (
-      bandwidthThrottlingValue !== undefined &&
-      Number(bandwidthThrottlingValue) !== 0
-    ) {
-      if (!result.mqtt) {
-        result.mqtt = {};
+    if (bandwidthThrottlingValue !== undefined) {
+      if (Number(bandwidthThrottlingValue) === 0) {
+        warnings.push('Incoming bandwidth throttling is set to unlimited (0). EMQX will use its default bandwidth limits.');
+      } else {
+        if (!result.mqtt) {
+          result.mqtt = {};
+        }
+        if (!result.mqtt.limiter) {
+          result.mqtt.limiter = {};
+        }
+        result.mqtt.limiter.bytes_rate = `${bandwidthThrottlingValue}b/s`;
       }
-      if (!result.mqtt.limiter) {
-        result.mqtt.limiter = {};
-      }
-      result.mqtt.limiter.bytes_rate = `${bandwidthThrottlingValue}b/s`;
     }
 
     // Store max connections for later use in listener converter
     if (maxConnections) {
       (result as any)._max_connections = maxConnections;
+    }
+
+    // Add warnings as comments if any
+    if (warnings.length > 0) {
+      (result as any)._warnings = warnings;
     }
 
     return result;

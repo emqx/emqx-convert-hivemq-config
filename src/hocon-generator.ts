@@ -10,8 +10,16 @@ export class HOCONGenerator {
   private generateObject(obj: any, lines: string[], indent: number): void {
     const indentStr = '  '.repeat(indent);
 
+    // Handle warnings first
+    if (obj._warnings && Array.isArray(obj._warnings)) {
+      for (const warning of obj._warnings) {
+        lines.push(`${indentStr}# WARNING: ${warning}`);
+      }
+      lines.push(''); // Add empty line after warnings
+    }
+
     for (const [key, value] of Object.entries(obj)) {
-      if (value === null || value === undefined) {
+      if (value === null || value === undefined || key === '_warnings') {
         continue;
       }
 
