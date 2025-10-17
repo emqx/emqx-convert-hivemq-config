@@ -20,7 +20,7 @@ export abstract class BaseConverter {
   protected getTextContent(element: any, tagName: string): string | undefined {
     if (!element || !element[tagName]) return undefined;
     const value = element[tagName];
-    return typeof value === 'string' ? value.trim() : undefined;
+    return typeof value === 'string' ? value.trim() : String(value);
   }
 
   protected getArrayContent(element: any, tagName: string): string[] {

@@ -77,43 +77,19 @@ The conversion logic is tested with sample configurations in the `conf/` directo
 
 #### Testing with EMQX
 
-To verify that the generated configuration works with a real EMQX instance:
+To verify that the generated config matches the schema:
 
-1. **Create empty base.hocon**:
 ```bash
-touch base.hocon
-```
-
-2. **Start EMQX container**:
-```bash
+node dist/cli.js conf/config.xml > output.hocon
 docker run -d --name emqx-test \
  -p 1883:1883 -p 8883:8883 -p 8083:8083 -p 8084:8084 -p 18083:18083 \
- -v $(pwd)/base.hocon:/opt/emqx/etc/base.hocon:ro \
  -v $(pwd)/etc/emqx/ssl:/etc/emqx/ssl:ro \
  emqx/emqx-enterprise:6.0.0
-```
-
-3. **Generate configuration**:
-```bash
-node dist/cli.js conf/config.xml > base.hocon
-```
-
-4. **Test generated config**:
-```bash
-docker exec -it emqx-test emqx ctl conf load etc/base.hocon
-```
-
-5. **Test listeners**:
-```bash
-mqttx sub -h localhost -p 1883 -q 1 -t test
-mqttx sub -h localhost -p 8083 -q 1 -t test -l ws
-curl http://localhost:18083/status
-```
-
-6. **Clean up**:
-```bash
+for i in {1..30}; do if docker exec emqx-test emqx ctl status > /dev/null 2>&1; then break; fi; done
+docker cp output.hocon emqx-test:/opt/emqx/etc/base.hocon
+docker exec emqx-test emqx check_config
 docker rm -f emqx-test
-rm -f base.hocon
+rm -f output.hocon
 ```
 
 ## Troubleshooting

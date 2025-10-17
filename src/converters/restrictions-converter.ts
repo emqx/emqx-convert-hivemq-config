@@ -12,30 +12,30 @@ export class RestrictionsConverter extends BaseConverter {
     let maxConnections: number | undefined;
 
     // Max Connections
-    const maxConnectionsStr = this.getTextContent(restrictions, 'max-connections');
-    if (maxConnectionsStr && maxConnectionsStr !== '-1') {
-      maxConnections = parseInt(maxConnectionsStr, 10);
+    const maxConnectionsValue = restrictions['max-connections'];
+    if (maxConnectionsValue !== undefined && Number(maxConnectionsValue) !== -1) {
+      maxConnections = Number(maxConnectionsValue);
     }
 
     // Max Client ID Length
-    const maxClientIdLength = this.getTextContent(restrictions, 'max-client-id-length');
-    if (maxClientIdLength && maxClientIdLength !== '65535') {
+    const maxClientIdLengthValue = restrictions['max-client-id-length'];
+    if (maxClientIdLengthValue !== undefined && Number(maxClientIdLengthValue) !== 65535) {
       if (!result.mqtt) {
         result.mqtt = {};
       }
-      result.mqtt.max_clientid_len = parseInt(maxClientIdLength, 10);
+      result.mqtt.max_clientid_len = Number(maxClientIdLengthValue);
     }
 
     // Incoming Bandwidth Throttling
-    const bandwidthThrottling = this.getTextContent(restrictions, 'incoming-bandwidth-throttling');
-    if (bandwidthThrottling && bandwidthThrottling !== '0') {
+    const bandwidthThrottlingValue = restrictions['incoming-bandwidth-throttling'];
+    if (bandwidthThrottlingValue !== undefined && Number(bandwidthThrottlingValue) !== 0) {
       if (!result.mqtt) {
         result.mqtt = {};
       }
       if (!result.mqtt.limiter) {
         result.mqtt.limiter = {};
       }
-      result.mqtt.limiter.bytes_rate = `${bandwidthThrottling}b/s`;
+      result.mqtt.limiter.bytes_rate = `${bandwidthThrottlingValue}b/s`;
     }
 
     // Store max connections for later use in listener converter
