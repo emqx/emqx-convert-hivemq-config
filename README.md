@@ -77,7 +77,7 @@ The conversion logic is tested with sample configurations in the `conf/` directo
 
 #### Testing with EMQX
 
-To verify that the generated configuration works with a real EMQX instance:
+To verify that the generated config matches the schema:
 
 ```bash
 node dist/cli.js conf/config.xml > output.hocon
@@ -86,8 +86,8 @@ docker run -d --name emqx-test \
  -v $(pwd)/etc/emqx/ssl:/etc/emqx/ssl:ro \
  emqx/emqx-enterprise:6.0.0
 for i in {1..30}; do if docker exec emqx-test emqx ctl status > /dev/null 2>&1; then break; fi; done
-docker cp output.hocon emqx-test:/opt/emqx/etc/
-docker exec emqx-test emqx ctl conf load etc/output.hocon
+docker cp output.hocon emqx-test:/opt/emqx/etc/base.hocon
+docker exec emqx-test emqx check_config
 docker rm -f emqx-test
 rm -f output.hocon
 ```

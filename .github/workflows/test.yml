@@ -51,8 +51,8 @@ jobs:
 
       - name: "Test ${{ matrix.config }}"
         run: |
-          node dist/cli.js ${{ matrix.config }} > test-output.hocon
-          cat test-output.hocon
+          node dist/cli.js ${{ matrix.config }} > output.hocon
+          cat output.hocon
 
           # Start EMQX container
           docker run -d --name emqx-test \
@@ -73,8 +73,8 @@ jobs:
           # Check if container is running
           docker ps | grep emqx-test
 
-          docker cp test-output.hocon emqx-test:/opt/emqx/etc/
-          docker exec emqx-test emqx ctl conf load etc/test-output.hocon
+          docker cp output.hocon emqx-test:/opt/emqx/etc/base.hocon
+          docker exec emqx-test emqx check_config
 
       - name: Cleanup
         if: always()
