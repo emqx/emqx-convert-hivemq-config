@@ -25,7 +25,7 @@ export class ConversionService {
       let hocon = this.hoconGenerator.generate(emqxConfig);
       
       // Post-process for proper formatting
-      hocon = this.hoconGenerator.postProcess(hocon);
+      // hocon = this.hoconGenerator.postProcess(hocon);
       
       return { hocon };
     } catch (error) {

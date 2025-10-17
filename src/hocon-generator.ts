@@ -63,21 +63,4 @@ export class HOCONGenerator {
     lines.push(`${indentStr}]`);
   }
 
-  postProcess(hoconString: string): string {
-    // Fix seeds array formatting for cluster configuration
-    const seedsPattern = /(seeds\s*=\s*\[)(.*?)(\])/gs;
-    
-    return hoconString.replace(seedsPattern, (match, opening, content, closing) => {
-      const lines = content.split('\n')
-        .map((line: string) => line.trim())
-        .filter((line: string) => line.length > 0);
-      
-      if (lines.length === 0) {
-        return `${opening}${closing}`;
-      }
-      
-      const formattedContent = lines.join(',\n        ');
-      return `${opening}\n        ${formattedContent}\n    ${closing}`;
-    });
-  }
 }
