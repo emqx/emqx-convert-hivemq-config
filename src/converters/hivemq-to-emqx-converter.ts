@@ -4,6 +4,7 @@ import { MqttConverter } from './mqtt-converter.js';
 import { RestrictionsConverter } from './restrictions-converter.js';
 import { ClusterConverter } from './cluster-converter.js';
 import { ControlCenterConverter } from './control-center-converter.js';
+import { KafkaConverter } from './kafka-converter.js';
 
 export class HiveMQToEMQXConverter {
   private converters = [
@@ -11,7 +12,8 @@ export class HiveMQToEMQXConverter {
     new MqttConverter(),
     new RestrictionsConverter(),
     new ClusterConverter(),
-    new ControlCenterConverter()
+    new ControlCenterConverter(),
+    new KafkaConverter()
   ];
 
   convert(config: HiveMQConfig): EMQXConfig {
