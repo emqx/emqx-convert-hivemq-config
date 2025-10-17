@@ -8,12 +8,6 @@ export class ClusterConverter extends BaseConverter {
     }
 
     const cluster = config.hivemq.cluster;
-    const enabled = this.getTextContent(cluster, 'enabled');
-    
-    if (enabled !== 'true') {
-      return {};
-    }
-
     const clusterConfig: ClusterEMQXConfig = {
       discovery_strategy: 'static',
       static: { seeds: [] }
@@ -24,8 +18,25 @@ export class ClusterConverter extends BaseConverter {
     }
 
     const staticConfig = cluster.discovery.static;
+    const staticEnabled = this.getTextContent(staticConfig, 'enabled');
+    
+    if (staticEnabled !== 'true') {
+      return {};
+    }
     const nodes: string[] = [];
 
+    // Handle seeds array
+    if (staticConfig.seeds?.seed) {
+      const seedArray = Array.isArray(staticConfig.seeds.seed) ? staticConfig.seeds.seed : [staticConfig.seeds.seed];
+      for (const seed of seedArray) {
+        const seedValue = this.getTextContent(seed, '') || seed;
+        if (seedValue) {
+          nodes.push(seedValue);
+        }
+      }
+    }
+
+    // Handle individual nodes (fallback)
     if (staticConfig.node) {
       const nodeArray = Array.isArray(staticConfig.node) ? staticConfig.node : [staticConfig.node];
       for (const node of nodeArray) {

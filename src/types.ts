@@ -103,10 +103,17 @@ export interface MqttConfig {
 export interface ClusterConfig {
   enabled?: string;
   discovery?: {
+    multicast?: {
+      enabled?: string;
+    };
     static?: {
+      enabled?: string;
       node?: Array<{
         host?: string;
       }>;
+      seeds?: {
+        seed?: string | string[];
+      };
     };
   };
   transport?: {
