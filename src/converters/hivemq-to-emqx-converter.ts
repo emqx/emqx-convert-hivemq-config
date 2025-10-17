@@ -13,7 +13,7 @@ export class HiveMQToEMQXConverter {
     new RestrictionsConverter(),
     new ClusterConverter(),
     new ControlCenterConverter(),
-    new KafkaConverter()
+    new KafkaConverter(),
   ];
 
   convert(config: HiveMQConfig): EMQXConfig {
@@ -32,8 +32,16 @@ export class HiveMQToEMQXConverter {
 
   private deepMerge(target: any, source: any): any {
     for (const key in source) {
-      if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
-        if (!target[key] || typeof target[key] !== 'object' || Array.isArray(target[key])) {
+      if (
+        source[key] &&
+        typeof source[key] === 'object' &&
+        !Array.isArray(source[key])
+      ) {
+        if (
+          !target[key] ||
+          typeof target[key] !== 'object' ||
+          Array.isArray(target[key])
+        ) {
           target[key] = {};
         }
         this.deepMerge(target[key], source[key]);
@@ -55,7 +63,8 @@ export class HiveMQToEMQXConverter {
 
     // Apply max connections to all listeners
     for (const listenerType in config.listeners) {
-      const listeners = config.listeners[listenerType as keyof typeof config.listeners];
+      const listeners =
+        config.listeners[listenerType as keyof typeof config.listeners];
       if (listeners && typeof listeners === 'object') {
         for (const listenerName in listeners) {
           const listener = listeners[listenerName as keyof typeof listeners];

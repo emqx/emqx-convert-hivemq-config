@@ -6,8 +6,8 @@ An application with web interface that converts HiveMQ XML configuration files t
 
 ### Prerequisites
 
-* [Node.js](https://nodejs.org/) (v18 or later)
-* [pnpm](https://pnpm.io/) package manager
+- [Node.js](https://nodejs.org/) (v18 or later)
+- [pnpm](https://pnpm.io/) package manager
 
 ```bash
 pnpm install

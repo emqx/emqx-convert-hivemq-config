@@ -13,11 +13,14 @@ export class MqttConverter extends BaseConverter {
     // Queued Messages
     if (mqttConfig['queued-messages']) {
       const queuedMessages = mqttConfig['queued-messages'];
-      const maxQueueSize = this.getTextContent(queuedMessages, 'max-queue-size');
+      const maxQueueSize = this.getTextContent(
+        queuedMessages,
+        'max-queue-size'
+      );
       if (maxQueueSize) {
         emqxMqtt.max_mqueue_len = parseInt(maxQueueSize, 10);
       }
-      
+
       const strategy = this.getTextContent(queuedMessages, 'strategy');
       if (strategy && !['discard', 'discard-oldest'].includes(strategy)) {
         console.warn(`Unsupported queue strategy: ${strategy}`);
@@ -43,7 +46,9 @@ export class MqttConverter extends BaseConverter {
       const messageExpiry = mqttConfig['message-expiry'];
       const maxInterval = this.getTextContent(messageExpiry, 'max-interval');
       if (maxInterval) {
-        console.warn('Limiting message expiry interval for MQTTv5 publishers is not supported.');
+        console.warn(
+          'Limiting message expiry interval for MQTTv5 publishers is not supported.'
+        );
         emqxMqtt.message_expiry_interval = `${maxInterval}s`;
       }
     }
@@ -62,14 +67,22 @@ export class MqttConverter extends BaseConverter {
       const keepAlive = mqttConfig['keep-alive'];
       const allowUnlimited = this.getTextContent(keepAlive, 'allow-unlimited');
       const maxKeepAlive = this.getTextContent(keepAlive, 'max-keep-alive');
-      if (allowUnlimited === 'false' || (maxKeepAlive && maxKeepAlive !== '65535')) {
-        console.warn('Limiting MQTT client keep-alive interval is not supported.');
+      if (
+        allowUnlimited === 'false' ||
+        (maxKeepAlive && maxKeepAlive !== '65535')
+      ) {
+        console.warn(
+          'Limiting MQTT client keep-alive interval is not supported.'
+        );
       }
     }
 
     // Packets
     if (mqttConfig.packets) {
-      const maxPacketSize = this.getTextContent(mqttConfig.packets, 'max-packet-size');
+      const maxPacketSize = this.getTextContent(
+        mqttConfig.packets,
+        'max-packet-size'
+      );
       if (maxPacketSize) {
         const size = parseInt(maxPacketSize, 10);
         // VLI calculation from original Python code
@@ -116,7 +129,9 @@ export class MqttConverter extends BaseConverter {
       const subId = mqttConfig['subscription-identifier'];
       const enabled = this.getTextContent(subId, 'enabled');
       if (enabled === 'false') {
-        console.warn('Restricting MQTTv5 Subscription Identifiers is not supported.');
+        console.warn(
+          'Restricting MQTTv5 Subscription Identifiers is not supported.'
+        );
       }
     }
 

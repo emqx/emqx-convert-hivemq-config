@@ -60,7 +60,13 @@ async function handleConversion(request: Request): Promise<Response> {
     }
 
     if (!xmlContent) {
-      return createResponse({ error: 'Please provide XML content either by uploading a file or pasting it' }, 400);
+      return createResponse(
+        {
+          error:
+            'Please provide XML content either by uploading a file or pasting it',
+        },
+        400
+      );
     }
 
     // Convert XML to HOCON
@@ -73,9 +79,12 @@ async function handleConversion(request: Request): Promise<Response> {
     return createResponse({ hocon: result.hocon });
   } catch (error) {
     console.error('Conversion error:', error);
-    return createResponse({
-      error: `Conversion error: ${error instanceof Error ? error.message : 'Unknown error'}`
-    }, 500);
+    return createResponse(
+      {
+        error: `Conversion error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      },
+      500
+    );
   }
 }
 

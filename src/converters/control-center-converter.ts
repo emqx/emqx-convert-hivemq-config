@@ -8,22 +8,23 @@ export class ControlCenterConverter extends BaseConverter {
     }
 
     const controlCenter = config.hivemq['control-center'];
-    
+
     if (!controlCenter.listeners?.http) {
       return {};
     }
 
     const httpListener = controlCenter.listeners.http;
     const port = this.getTextContent(httpListener, 'port') || '18083';
-    const bindAddress = this.getTextContent(httpListener, 'bind-address') || '0.0.0.0';
+    const bindAddress =
+      this.getTextContent(httpListener, 'bind-address') || '0.0.0.0';
 
     // Convert to EMQX dashboard configuration
     const dashboardConfig = {
       listeners: {
         http: {
-          bind: `${bindAddress}:${port}`
-        }
-      }
+          bind: `${bindAddress}:${port}`,
+        },
+      },
     };
 
     return { dashboard: dashboardConfig };

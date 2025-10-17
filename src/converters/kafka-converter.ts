@@ -1,5 +1,13 @@
 import { BaseConverter } from './base-converter.js';
-import { HiveMQConfig, EMQXConfig, KafkaBridgeEMQXConfig, KafkaConnectorConfig, KafkaActionConfig, KafkaSourceConfig, KafkaRuleConfig } from '../types.js';
+import {
+  HiveMQConfig,
+  EMQXConfig,
+  KafkaBridgeEMQXConfig,
+  KafkaConnectorConfig,
+  KafkaActionConfig,
+  KafkaSourceConfig,
+  KafkaRuleConfig,
+} from '../types.js';
 
 export class KafkaConverter extends BaseConverter {
   convert(config: HiveMQConfig): EMQXConfig {
@@ -40,28 +48,32 @@ export class KafkaConverter extends BaseConverter {
     return result;
   }
 
-  private mapClustersToConnectors(kafkaConfig: any): Record<string, Record<string, KafkaConnectorConfig>> {
+  private mapClustersToConnectors(
+    kafkaConfig: any
+  ): Record<string, Record<string, KafkaConnectorConfig>> {
     const connectors = { kafka_producer: {}, kafka_consumer: {} };
-    
+
     if (!kafkaConfig['kafka-clusters']?.['kafka-cluster']) {
       return connectors;
     }
 
-    const clusters = Array.isArray(kafkaConfig['kafka-clusters']['kafka-cluster']) 
-      ? kafkaConfig['kafka-clusters']['kafka-cluster'] 
+    const clusters = Array.isArray(
+      kafkaConfig['kafka-clusters']['kafka-cluster']
+    )
+      ? kafkaConfig['kafka-clusters']['kafka-cluster']
       : [kafkaConfig['kafka-clusters']['kafka-cluster']];
 
     for (const cluster of clusters) {
       const clusterId = this.getTextContent(cluster, 'id');
       const bootstrapHosts = this.getTextContent(cluster, 'bootstrap-servers');
-      
+
       if (!clusterId || !bootstrapHosts) {
         continue;
       }
 
       const connectorConfig: any = {
         bootstrap_hosts: bootstrapHosts,
-        enable: true
+        enable: true,
       };
 
       // Add TLS configuration if present
@@ -70,9 +82,15 @@ export class KafkaConverter extends BaseConverter {
         if (tlsEnabled === 'true') {
           connectorConfig.ssl = {
             enable: true,
-            keyfile: this.getTextContent(cluster.tls.keystore, 'path') || '/path/to/key.pem',
-            certfile: this.getTextContent(cluster.tls.keystore, 'path') || '/path/to/cert.pem',
-            cacertfile: this.getTextContent(cluster.tls.truststore, 'path') || '/path/to/cacert.pem'
+            keyfile:
+              this.getTextContent(cluster.tls.keystore, 'path') ||
+              '/path/to/key.pem',
+            certfile:
+              this.getTextContent(cluster.tls.keystore, 'path') ||
+              '/path/to/cert.pem',
+            cacertfile:
+              this.getTextContent(cluster.tls.truststore, 'path') ||
+              '/path/to/cacert.pem',
           };
         }
       }
@@ -82,20 +100,40 @@ export class KafkaConverter extends BaseConverter {
         if (cluster.authentication.plain) {
           connectorConfig.authentication = {
             mechanism: 'plain',
-            username: this.getTextContent(cluster.authentication.plain, 'username') || '',
-            password: this.getTextContent(cluster.authentication.plain, 'password') || ''
+            username:
+              this.getTextContent(cluster.authentication.plain, 'username') ||
+              '',
+            password:
+              this.getTextContent(cluster.authentication.plain, 'password') ||
+              '',
           };
         } else if (cluster.authentication['scram-sha256']) {
           connectorConfig.authentication = {
             mechanism: 'scram_sha_256',
-            username: this.getTextContent(cluster.authentication['scram-sha256'], 'username') || '',
-            password: this.getTextContent(cluster.authentication['scram-sha256'], 'password') || ''
+            username:
+              this.getTextContent(
+                cluster.authentication['scram-sha256'],
+                'username'
+              ) || '',
+            password:
+              this.getTextContent(
+                cluster.authentication['scram-sha256'],
+                'password'
+              ) || '',
           };
         } else if (cluster.authentication['scram-sha512']) {
           connectorConfig.authentication = {
             mechanism: 'scram_sha_512',
-            username: this.getTextContent(cluster.authentication['scram-sha512'], 'username') || '',
-            password: this.getTextContent(cluster.authentication['scram-sha512'], 'password') || ''
+            username:
+              this.getTextContent(
+                cluster.authentication['scram-sha512'],
+                'username'
+              ) || '',
+            password:
+              this.getTextContent(
+                cluster.authentication['scram-sha512'],
+                'password'
+              ) || '',
           };
         }
       }
@@ -107,7 +145,10 @@ export class KafkaConverter extends BaseConverter {
     return connectors;
   }
 
-  private mapMqttToKafka(kafkaConfig: any): { actions: Record<string, Record<string, KafkaActionConfig>>, rules: Record<string, KafkaRuleConfig> } {
+  private mapMqttToKafka(kafkaConfig: any): {
+    actions: Record<string, Record<string, KafkaActionConfig>>;
+    rules: Record<string, KafkaRuleConfig>;
+  } {
     const actions = { kafka_producer: {} };
     const rules = {};
 
@@ -115,7 +156,9 @@ export class KafkaConverter extends BaseConverter {
       return { actions, rules };
     }
 
-    const mappings = Array.isArray(kafkaConfig['mqtt-to-kafka-mappings']['mqtt-to-kafka-mapping'])
+    const mappings = Array.isArray(
+      kafkaConfig['mqtt-to-kafka-mappings']['mqtt-to-kafka-mapping']
+    )
       ? kafkaConfig['mqtt-to-kafka-mappings']['mqtt-to-kafka-mapping']
       : [kafkaConfig['mqtt-to-kafka-mappings']['mqtt-to-kafka-mapping']];
 
@@ -129,7 +172,10 @@ export class KafkaConverter extends BaseConverter {
         continue;
       }
 
-      const mqttTopicFilters = this.getArrayContent(topicFilters, 'mqtt-topic-filter');
+      const mqttTopicFilters = this.getArrayContent(
+        topicFilters,
+        'mqtt-topic-filter'
+      );
       if (mqttTopicFilters.length === 0) {
         continue;
       }
@@ -142,21 +188,23 @@ export class KafkaConverter extends BaseConverter {
         enable: true,
         parameters: {
           message: {
-            value: "${.}"
+            value: '${.}',
           },
           topic: kafkaTopic,
-          ...(acks && { acks: acks.toLowerCase() })
-        }
+          ...(acks && { acks: acks.toLowerCase() }),
+        },
       };
       (actions.kafka_producer as any)[actionName] = actionConfig;
 
       // Create rule named after the mapping
       const ruleName = `mqtt-to-kafka-mapping-${mappingId}`;
-      const fromClause = mqttTopicFilters.map(topic => `'${topic}'`).join(',');
+      const fromClause = mqttTopicFilters
+        .map((topic) => `'${topic}'`)
+        .join(',');
       const ruleConfig: KafkaRuleConfig = {
         sql: `SELECT * FROM ${fromClause}`,
         actions: [`kafka_producer:${actionName}`],
-        enable: true
+        enable: true,
       };
       (rules as any)[ruleName] = ruleConfig;
     }
@@ -164,7 +212,10 @@ export class KafkaConverter extends BaseConverter {
     return { actions, rules };
   }
 
-  private mapKafkaToMqtt(kafkaConfig: any): { sources: Record<string, Record<string, KafkaSourceConfig>>, kafkaToMqttRules: Record<string, any> } {
+  private mapKafkaToMqtt(kafkaConfig: any): {
+    sources: Record<string, Record<string, KafkaSourceConfig>>;
+    kafkaToMqttRules: Record<string, any>;
+  } {
     const sources = { kafka_consumer: {} };
     const kafkaToMqttRules = {};
 
@@ -172,7 +223,9 @@ export class KafkaConverter extends BaseConverter {
       return { sources, kafkaToMqttRules };
     }
 
-    const mappings = Array.isArray(kafkaConfig['kafka-to-mqtt-mappings']['kafka-to-mqtt-mapping'])
+    const mappings = Array.isArray(
+      kafkaConfig['kafka-to-mqtt-mappings']['kafka-to-mqtt-mapping']
+    )
       ? kafkaConfig['kafka-to-mqtt-mappings']['kafka-to-mqtt-mapping']
       : [kafkaConfig['kafka-to-mqtt-mappings']['kafka-to-mqtt-mapping']];
 
@@ -196,9 +249,9 @@ export class KafkaConverter extends BaseConverter {
         const sourceConfig: KafkaSourceConfig = {
           connector: clusterId,
           parameters: {
-            topic: kafkaTopic
+            topic: kafkaTopic,
           },
-          enable: true
+          enable: true,
         };
         (sources.kafka_consumer as any)[sourceName] = sourceConfig;
         sourceNames.push(`$bridges/kafka_consumer:${sourceName}`);
@@ -211,13 +264,13 @@ export class KafkaConverter extends BaseConverter {
           actions: [
             {
               args: {
-                topic: "kafka"
+                topic: 'kafka',
               },
-              function: "republish"
-            }
+              function: 'republish',
+            },
           ],
           enable: true,
-          sql: `SELECT * FROM ${sourceNames.map(name => `'${name}'`).join(',')}`
+          sql: `SELECT * FROM ${sourceNames.map((name) => `'${name}'`).join(',')}`,
         };
         (kafkaToMqttRules as any)[ruleName] = ruleConfig;
       }

@@ -9,9 +9,17 @@ export class HOCONGenerator {
 
   private generateObject(obj: any, lines: string[], indent: number): void {
     const indentStr = '  '.repeat(indent);
-    
+
+    // Handle warnings first
+    if (obj._warnings && Array.isArray(obj._warnings)) {
+      for (const warning of obj._warnings) {
+        lines.push(`${indentStr}# WARNING: ${warning}`);
+      }
+      lines.push(''); // Add empty line after warnings
+    }
+
     for (const [key, value] of Object.entries(obj)) {
-      if (value === null || value === undefined) {
+      if (value === null || value === undefined || key === '_warnings') {
         continue;
       }
 
@@ -31,16 +39,21 @@ export class HOCONGenerator {
     }
   }
 
-  private generateArray(key: string, arr: any[], lines: string[], indent: number): void {
+  private generateArray(
+    key: string,
+    arr: any[],
+    lines: string[],
+    indent: number
+  ): void {
     const indentStr = '  '.repeat(indent);
-    
+
     if (arr.length === 0) {
       lines.push(`${indentStr}${key} = []`);
       return;
     }
 
     lines.push(`${indentStr}${key} = [`);
-    
+
     for (let i = 0; i < arr.length; i++) {
       const item = arr[i];
       if (typeof item === 'string') {
@@ -54,13 +67,12 @@ export class HOCONGenerator {
         this.generateObject(item, lines, indent + 2);
         lines.push(`${indentStr}  }`);
       }
-      
+
       if (i < arr.length - 1) {
         lines[lines.length - 1] += ',';
       }
     }
-    
+
     lines.push(`${indentStr}]`);
   }
-
 }

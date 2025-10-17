@@ -13,16 +13,16 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - "conf/config.xml"
-          - "conf/examples/configuration/config-sample-mqtt.xml"
-          - "conf/examples/configuration/config-sample-tcp-and-websockets.xml"
-          - "conf/examples/configuration/config-sample-websockets.xml"
-          - "conf/examples/configuration/cluster/config-sample-cluster-tcp.xml"
-          - "conf/examples/configuration/controlcenter/config-sample-control-center.xml"
-          - "conf/examples/configuration/other/config-discard-oldest-messages.xml"
-          - "conf/examples/configuration/other/config-restrictions.xml"
-          - "conf/examples/configuration/rest-api/config-sample-rest-api.xml"
-          - "extensions/hivemq-kafka-extension/conf/examples/config.xml"
+          - 'conf/config.xml'
+          - 'conf/examples/configuration/config-sample-mqtt.xml'
+          - 'conf/examples/configuration/config-sample-tcp-and-websockets.xml'
+          - 'conf/examples/configuration/config-sample-websockets.xml'
+          - 'conf/examples/configuration/cluster/config-sample-cluster-tcp.xml'
+          - 'conf/examples/configuration/controlcenter/config-sample-control-center.xml'
+          - 'conf/examples/configuration/other/config-discard-oldest-messages.xml'
+          - 'conf/examples/configuration/other/config-restrictions.xml'
+          - 'conf/examples/configuration/rest-api/config-sample-rest-api.xml'
+          - 'extensions/hivemq-kafka-extension/conf/examples/config.xml'
           # - "conf/examples/configuration/tls/config-sample-mqtt-tls.xml"
           # - "conf/examples/configuration/tls/config-sample-mqtt-tls-client-auth.xml"
           # - "conf/examples/configuration/tls/config-sample-websockets-tls.xml"
@@ -50,7 +50,7 @@ jobs:
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: "Test ${{ matrix.config }}"
+      - name: 'Test ${{ matrix.config }}'
         run: |
           node dist/cli.js ${{ matrix.config }} > output.hocon
           cat output.hocon

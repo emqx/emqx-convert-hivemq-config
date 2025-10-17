@@ -14,12 +14,12 @@ function parseArgs(args: string[]): CliOptions {
   const options: CliOptions = {
     input: '',
     output: undefined,
-    help: false
+    help: false,
   };
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    
+
     if (arg === '-h' || arg === '--help') {
       options.help = true;
     } else if (arg === '-o' || arg === '--output') {
@@ -100,9 +100,11 @@ async function main() {
     } else {
       console.log(result.hocon);
     }
-
   } catch (error) {
-    console.error('Error:', error instanceof Error ? error.message : String(error));
+    console.error(
+      'Error:',
+      error instanceof Error ? error.message : String(error)
+    );
     process.exit(1);
   }
 }
