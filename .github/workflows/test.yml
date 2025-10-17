@@ -22,6 +22,7 @@ jobs:
           - "conf/examples/configuration/other/config-discard-oldest-messages.xml"
           - "conf/examples/configuration/other/config-restrictions.xml"
           - "conf/examples/configuration/rest-api/config-sample-rest-api.xml"
+          - "extensions/hivemq-kafka-extension/conf/examples/config.xml"
           # - "conf/examples/configuration/tls/config-sample-mqtt-tls.xml"
           # - "conf/examples/configuration/tls/config-sample-mqtt-tls-client-auth.xml"
           # - "conf/examples/configuration/tls/config-sample-websockets-tls.xml"

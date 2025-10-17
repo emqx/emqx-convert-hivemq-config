@@ -73,8 +73,8 @@ async function handleConversion(request: Request): Promise<Response> {
     return createResponse({ hocon: result.hocon });
   } catch (error) {
     console.error('Conversion error:', error);
-    return createResponse({ 
-      error: `Conversion error: ${error instanceof Error ? error.message : 'Unknown error'}` 
+    return createResponse({
+      error: `Conversion error: ${error instanceof Error ? error.message : 'Unknown error'}`
     }, 500);
   }
 }
@@ -294,6 +294,55 @@ function serveFrontend(): Response {
             box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
         }
 
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+
+        .samples-section {
+            margin: 40px 0;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .samples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .sample-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .sample-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-color: #3498db;
+        }
+
+        .sample-card h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .sample-card p {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
         .output-section {
             margin-top: 30px;
         }
@@ -363,15 +412,15 @@ function serveFrontend(): Response {
                 margin: 10px;
                 border-radius: 8px;
             }
-            
+
             .content {
                 padding: 20px;
             }
-            
+
             .header h1 {
                 font-size: 2rem;
             }
-            
+
             .button-group {
                 flex-direction: column;
             }
@@ -384,7 +433,7 @@ function serveFrontend(): Response {
             <h1>HiveMQ to EMQX Converter</h1>
             <p>Convert your HiveMQ XML configuration to EMQX HOCON format</p>
         </div>
-        
+
         <div class="content">
             <form id="converterForm">
                 <div class="input-section">
@@ -398,20 +447,63 @@ function serveFrontend(): Response {
                             <div class="file-info" id="fileInfo"></div>
                         </div>
                     </div>
-                    
+
                     <div class="divider">
                         <span>OR</span>
                     </div>
-                    
+
                     <h2 class="section-title">Paste XML Configuration</h2>
                     <div class="textarea-group">
-                        <textarea 
-                            id="xmlContent" 
+                        <textarea
+                            id="xmlContent"
                             placeholder="Paste your HiveMQ XML configuration here..."
                         ></textarea>
                     </div>
                 </div>
-                
+
+                <div class="samples-section">
+                    <h2 class="section-title">Sample Configurations</h2>
+                    <p style="margin-bottom: 20px; color: #7f8c8d;">Try these sample HiveMQ configurations to see the converter in action:</p>
+
+                    <div class="samples-grid">
+                        <div class="sample-card" data-sample="basic-mqtt">
+                            <h3>Basic MQTT</h3>
+                            <p>TCP listener with MQTT settings</p>
+                            <button class="btn btn-secondary btn-sm">Load Sample</button>
+                        </div>
+
+                        <div class="sample-card" data-sample="tcp-websockets">
+                            <h3>TCP + WebSockets</h3>
+                            <p>Multiple listeners with WebSocket support</p>
+                            <button class="btn btn-secondary btn-sm">Load Sample</button>
+                        </div>
+
+                        <div class="sample-card" data-sample="restrictions">
+                            <h3>Connection Restrictions</h3>
+                            <p>Max connections and bandwidth limits</p>
+                            <button class="btn btn-secondary btn-sm">Load Sample</button>
+                        </div>
+
+                        <div class="sample-card" data-sample="kafka-extension">
+                            <h3>Kafka Extension</h3>
+                            <p>MQTT to Kafka bridge configuration</p>
+                            <button class="btn btn-secondary btn-sm">Load Sample</button>
+                        </div>
+
+                        <div class="sample-card" data-sample="tls-websockets">
+                            <h3>TLS WebSockets</h3>
+                            <p>Secure WebSocket connections</p>
+                            <button class="btn btn-secondary btn-sm">Load Sample</button>
+                        </div>
+
+                        <div class="sample-card" data-sample="cluster-tcp">
+                            <h3>Cluster TCP</h3>
+                            <p>Multi-node cluster configuration</p>
+                            <button class="btn btn-secondary btn-sm">Load Sample</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="button-group">
                     <button type="submit" class="btn btn-primary" id="convertBtn">
                         🔄 Convert to EMQX HOCON
@@ -421,7 +513,7 @@ function serveFrontend(): Response {
                     </button>
                 </div>
             </form>
-            
+
             <div class="output-section" id="outputSection" style="display: none;">
                 <h2 class="section-title">Converted EMQX Configuration</h2>
                 <div class="output-container">
@@ -436,7 +528,7 @@ function serveFrontend(): Response {
                     </button>
                 </div>
             </div>
-            
+
             <div id="messageContainer"></div>
         </div>
     </div>
@@ -456,6 +548,180 @@ function serveFrontend(): Response {
         const messageContainer = document.getElementById('messageContainer');
 
         let currentHoconContent = '';
+
+        // Sample configurations
+        const sampleConfigs = {
+            'basic-mqtt': \`<?xml version="1.0"?>
+<hivemq>
+    <listeners>
+        <tcp-listener>
+            <port>1883</port>
+            <bind-address>0.0.0.0</bind-address>
+        </tcp-listener>
+    </listeners>
+    <mqtt>
+        <queued-messages>
+            <max-queue-size>1000</max-queue-size>
+            <strategy>discard</strategy>
+        </queued-messages>
+        <topic-alias>
+            <enabled>true</enabled>
+            <max-per-client>5</max-per-client>
+        </topic-alias>
+        <message-expiry>
+            <max-interval>4294967296</max-interval>
+        </message-expiry>
+        <session-expiry>
+            <max-interval>4294967295</max-interval>
+        </session-expiry>
+        <keep-alive>
+            <allow-unlimited>true</allow-unlimited>
+            <max-keep-alive>65535</max-keep-alive>
+        </keep-alive>
+        <packets>
+            <max-packet-size>268435460</max-packet-size>
+        </packets>
+        <receive-maximum>
+            <server-receive-maximum>10</server-receive-maximum>
+        </receive-maximum>
+        <quality-of-service>
+            <max-qos>2</max-qos>
+        </quality-of-service>
+        <wildcard-subscriptions>
+            <enabled>true</enabled>
+        </wildcard-subscriptions>
+        <shared-subscriptions>
+            <enabled>true</enabled>
+        </shared-subscriptions>
+        <subscription-identifier>
+            <enabled>true</enabled>
+        </subscription-identifier>
+        <retained-messages>
+            <enabled>true</enabled>
+        </retained-messages>
+    </mqtt>
+</hivemq>\`,
+
+            'tcp-websockets': \`<?xml version="1.0"?>
+<hivemq>
+    <listeners>
+        <tcp-listener>
+            <port>1883</port>
+            <bind-address>0.0.0.0</bind-address>
+        </tcp-listener>
+        <websocket-listener>
+            <port>8000</port>
+            <bind-address>0.0.0.0</bind-address>
+            <path>/mqtt</path>
+            <subprotocols>
+                <subprotocol>mqttv3.1</subprotocol>
+                <subprotocol>mqtt</subprotocol>
+            </subprotocols>
+            <allow-extensions>true</allow-extensions>
+        </websocket-listener>
+    </listeners>
+</hivemq>\`,
+
+            'restrictions': \`<?xml version="1.0"?>
+<hivemq>
+    <listeners>
+        <tcp-listener>
+            <port>1883</port>
+            <bind-address>0.0.0.0</bind-address>
+        </tcp-listener>
+    </listeners>
+    <restrictions>
+        <max-connections>-1</max-connections>
+        <max-client-id-length>65535</max-client-id-length>
+        <incoming-bandwidth-throttling>0</incoming-bandwidth-throttling>
+    </restrictions>
+</hivemq>\`,
+
+            'kafka-extension': \`<?xml version="1.0"?>
+<hivemq>
+    <kafka-configuration>
+        <kafka-clusters>
+            <kafka-cluster>
+                <id>cluster01</id>
+                <bootstrap-servers>127.0.0.1:9092</bootstrap-servers>
+            </kafka-cluster>
+        </kafka-clusters>
+        <mqtt-to-kafka-mappings>
+            <mqtt-to-kafka-mapping>
+                <id>mapping01</id>
+                <cluster-id>cluster01</cluster-id>
+                <mqtt-topic-filters>
+                    <mqtt-topic-filter>#</mqtt-topic-filter>
+                </mqtt-topic-filters>
+                <kafka-topic>emqx</kafka-topic>
+            </mqtt-to-kafka-mapping>
+        </mqtt-to-kafka-mappings>
+        <kafka-to-mqtt-mappings>
+            <kafka-to-mqtt-mapping>
+                <id>mapping02</id>
+                <cluster-id>cluster01</cluster-id>
+                <kafka-topics>
+                    <kafka-topic>topic1</kafka-topic>
+                    <kafka-topic>topic2</kafka-topic>
+                </kafka-topics>
+            </kafka-to-mqtt-mapping>
+        </kafka-to-mqtt-mappings>
+    </kafka-configuration>
+</hivemq>\`,
+
+            'tls-websockets': \`<?xml version="1.0"?>
+<hivemq>
+    <listeners>
+        <tcp-listener>
+            <port>1883</port>
+            <bind-address>0.0.0.0</bind-address>
+        </tcp-listener>
+        <tls-websocket-listener>
+            <port>8084</port>
+            <bind-address>0.0.0.0</bind-address>
+            <path>/mqtt</path>
+            <subprotocols>
+                <subprotocol>mqttv3.1</subprotocol>
+                <subprotocol>mqtt</subprotocol>
+            </subprotocols>
+            <tls>
+                <keystore>
+                    <path>keystore.jks</path>
+                    <password>hivemq</password>
+                </keystore>
+                <truststore>
+                    <path>truststore.jks</path>
+                    <password>hivemq</password>
+                </truststore>
+            </tls>
+        </tls-websocket-listener>
+    </listeners>
+</hivemq>\`,
+
+            'cluster-tcp': \`<?xml version="1.0"?>
+<hivemq>
+    <listeners>
+        <tcp-listener>
+            <port>1883</port>
+            <bind-address>0.0.0.0</bind-address>
+        </tcp-listener>
+    </listeners>
+    <cluster>
+        <discovery>
+            <multicast>
+                <enabled>false</enabled>
+            </multicast>
+            <static>
+                <enabled>true</enabled>
+                <seeds>
+                    <seed>emqx@127.0.0.1</seed>
+                    <seed>emqx@127.0.0.1</seed>
+                </seeds>
+            </static>
+        </discovery>
+    </cluster>
+</hivemq>\`
+        };
 
         // File upload handling
         fileInput.addEventListener('change', handleFileSelect);
@@ -500,9 +766,9 @@ function serveFrontend(): Response {
         // Form submission
         form.addEventListener('submit', async function(event) {
             event.preventDefault();
-            
+
             const formData = new FormData();
-            
+
             if (fileInput.files.length > 0) {
                 formData.append('file', fileInput.files[0]);
             } else if (xmlContent.value.trim()) {
@@ -513,15 +779,15 @@ function serveFrontend(): Response {
             }
 
             showLoading();
-            
+
             try {
                 const response = await fetch('/convert', {
                     method: 'POST',
                     body: formData
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (response.ok) {
                     currentHoconContent = data.hocon;
                     outputContent.textContent = data.hocon;
@@ -571,12 +837,28 @@ function serveFrontend(): Response {
             showMessage('Configuration downloaded!', 'success');
         });
 
+        // Sample configuration loading
+        document.querySelectorAll('.sample-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const sampleId = this.getAttribute('data-sample');
+                const sampleXml = sampleConfigs[sampleId];
+                if (sampleXml) {
+                    xmlContent.value = sampleXml;
+                    showMessage(\`Loaded \${this.querySelector('h3').textContent} sample configuration\`, 'success');
+                    // Auto-convert the sample
+                    setTimeout(() => {
+                        form.dispatchEvent(new Event('submit'));
+                    }, 500);
+                }
+            });
+        });
+
         function showMessage(message, type) {
             const messageDiv = document.createElement('div');
             messageDiv.className = type;
             messageDiv.textContent = message;
             messageContainer.appendChild(messageDiv);
-            
+
             setTimeout(() => {
                 messageDiv.remove();
             }, 5000);

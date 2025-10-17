@@ -10,6 +10,7 @@ export interface HiveMQConfig {
     cluster?: ClusterConfig;
     restrictions?: RestrictionsConfig;
     'control-center'?: ControlCenterConfig;
+    'kafka-configuration'?: KafkaConfiguration;
   };
 }
 
@@ -144,6 +145,9 @@ export interface EMQXConfig {
       };
     };
   };
+  bridges?: {
+    kafka?: KafkaBridgeEMQXConfig;
+  };
 }
 
 export interface TcpListenerConfig {
@@ -210,4 +214,120 @@ export interface ClusterEMQXConfig {
   static: {
     seeds: string[];
   };
+}
+
+// Kafka Extension Types
+export interface KafkaConfiguration {
+  'kafka-clusters'?: {
+    'kafka-cluster'?: KafkaCluster[];
+  };
+  'mqtt-to-kafka-mappings'?: {
+    'mqtt-to-kafka-mapping'?: MqttToKafkaMapping[];
+  };
+  'kafka-to-mqtt-mappings'?: {
+    'kafka-to-mqtt-mapping'?: KafkaToMqttMapping[];
+  };
+}
+
+export interface KafkaCluster {
+  id?: string;
+  'bootstrap-servers'?: string;
+  tls?: KafkaTlsConfig;
+  authentication?: KafkaAuthConfig;
+}
+
+export interface KafkaTlsConfig {
+  enabled?: boolean;
+  keystore?: KeystoreConfig;
+  truststore?: TruststoreConfig;
+}
+
+export interface KafkaAuthConfig {
+  plain?: {
+    username?: string;
+    password?: string;
+  };
+  'scram-sha256'?: {
+    username?: string;
+    password?: string;
+  };
+  'scram-sha512'?: {
+    username?: string;
+    password?: string;
+  };
+}
+
+export interface MqttToKafkaMapping {
+  id?: string;
+  'cluster-id'?: string;
+  'mqtt-topic-filters'?: {
+    'mqtt-topic-filter'?: string[];
+  };
+  'kafka-topic'?: string;
+  'kafka-acks'?: 'ZERO' | 'ONE' | 'ALL';
+}
+
+export interface KafkaToMqttMapping {
+  id?: string;
+  'cluster-id'?: string;
+  'kafka-topics'?: {
+    'kafka-topic'?: string[];
+  };
+  'mqtt-topics'?: {
+    'mqtt-topic'?: string[];
+  };
+}
+
+// EMQX Kafka Bridge Types
+export interface KafkaBridgeEMQXConfig {
+  connectors?: {
+    kafka_producer?: Record<string, KafkaConnectorConfig>;
+    kafka_consumer?: Record<string, KafkaConnectorConfig>;
+  };
+  actions?: {
+    kafka_producer?: Record<string, KafkaActionConfig>;
+  };
+  sources?: {
+    kafka_consumer?: Record<string, KafkaSourceConfig>;
+  };
+  rule_engine?: {
+    rules?: Record<string, KafkaRuleConfig>;
+  };
+}
+
+export interface KafkaConnectorConfig {
+  bootstrap_hosts: string;
+  ssl?: {
+    enable?: boolean;
+    keyfile?: string;
+    certfile?: string;
+    cacertfile?: string;
+  };
+  authentication?: {
+    mechanism?: 'plain' | 'scram_sha_256' | 'scram_sha_512';
+    username?: string;
+    password?: string;
+  };
+}
+
+export interface KafkaActionConfig {
+  connector: string;
+  parameters: {
+    topic: string;
+    acks?: string;
+  };
+}
+
+export interface KafkaSourceConfig {
+  connector: string;
+  parameters: {
+    topic: string;
+  };
+  enable: boolean;
+}
+
+export interface KafkaRuleConfig {
+  sql: string;
+  actions: string[];
+  enable: boolean;
 }
