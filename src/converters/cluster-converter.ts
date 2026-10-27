@@ -8,19 +8,23 @@ export class ClusterConverter extends BaseConverter {
     }
 
     const cluster = config.hivemq.cluster;
+    if (this.getTextContent(cluster, 'enabled') === 'false') return {};
     const clusterConfig: ClusterEMQXConfig = {
       discovery_strategy: 'static',
       static: { seeds: [] },
     };
 
     if (!cluster.discovery?.static) {
+      this.warn(
+        'Only static cluster discovery can be converted. Configure EMQX cluster discovery manually.'
+      );
       return {};
     }
 
     const staticConfig = cluster.discovery.static;
     const staticEnabled = this.getTextContent(staticConfig, 'enabled');
 
-    if (staticEnabled !== 'true') {
+    if (staticEnabled === 'false') {
       return {};
     }
     const nodes: string[] = [];
@@ -55,11 +59,14 @@ export class ClusterConverter extends BaseConverter {
       return {};
     }
 
-    clusterConfig.static.seeds = nodes;
+    clusterConfig.static.seeds = [...new Set(nodes)];
+    this.warn(
+      'Static cluster seeds use emqx@host node names. Review node names, the shared cookie and distribution ports before deploying.'
+    );
 
     // Warn about TCP transport settings
     if (cluster.transport?.tcp) {
-      console.warn(
+      this.warn(
         'TCP transport settings for clustering are not directly convertible. EMQX uses Erlang distribution for node communication. Please review your EMQX node and networking setup.'
       );
     }

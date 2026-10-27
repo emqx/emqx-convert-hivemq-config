@@ -16,6 +16,9 @@ export class KafkaConverter extends BaseConverter {
     }
 
     const kafkaConfig = config.hivemq['kafka-configuration'];
+    this.warn(
+      'Kafka mappings are templates. Review topics, payloads, consumer groups, delivery semantics and credentials before applying them.'
+    );
     const result: any = {};
 
     // Map clusters to connectors
@@ -68,8 +71,12 @@ export class KafkaConverter extends BaseConverter {
       const bootstrapHosts = this.getTextContent(cluster, 'bootstrap-servers');
 
       if (!clusterId || !bootstrapHosts) {
+        this.warn(
+          'Skipped a Kafka cluster without an ID or bootstrap servers.'
+        );
         continue;
       }
+      this.validateId(clusterId);
 
       const connectorConfig: any = {
         bootstrap_hosts: bootstrapHosts,
@@ -80,17 +87,14 @@ export class KafkaConverter extends BaseConverter {
       if (cluster.tls) {
         const tlsEnabled = this.getTextContent(cluster.tls, 'enabled');
         if (tlsEnabled === 'true') {
+          this.warn(
+            'Kafka TLS requires PEM certificate files. Convert Java keystores and replace the generated paths.'
+          );
           connectorConfig.ssl = {
             enable: true,
-            keyfile:
-              this.getTextContent(cluster.tls.keystore, 'path') ||
-              '/path/to/key.pem',
-            certfile:
-              this.getTextContent(cluster.tls.keystore, 'path') ||
-              '/path/to/cert.pem',
-            cacertfile:
-              this.getTextContent(cluster.tls.truststore, 'path') ||
-              '/path/to/cacert.pem',
+            keyfile: '/path/to/key.pem',
+            certfile: '/path/to/cert.pem',
+            cacertfile: '/path/to/cacert.pem',
           };
         }
       }
@@ -169,8 +173,11 @@ export class KafkaConverter extends BaseConverter {
       const topicFilters = mapping['mqtt-topic-filters'];
 
       if (!mappingId || !clusterId || !kafkaTopic || !topicFilters) {
+        this.warn('Skipped an incomplete MQTT-to-Kafka mapping.');
         continue;
       }
+      this.validateId(mappingId);
+      this.validateId(clusterId);
 
       const mqttTopicFilters = this.getArrayContent(
         topicFilters,
@@ -199,7 +206,7 @@ export class KafkaConverter extends BaseConverter {
       // Create rule named after the mapping
       const ruleName = `mqtt-to-kafka-mapping-${mappingId}`;
       const fromClause = mqttTopicFilters
-        .map((topic) => `'${topic}'`)
+        .map((topic) => this.sqlTopic(topic))
         .join(',');
       const ruleConfig: KafkaRuleConfig = {
         sql: `SELECT * FROM ${fromClause}`,
@@ -229,16 +236,18 @@ export class KafkaConverter extends BaseConverter {
       ? kafkaConfig['kafka-to-mqtt-mappings']['kafka-to-mqtt-mapping']
       : [kafkaConfig['kafka-to-mqtt-mappings']['kafka-to-mqtt-mapping']];
 
-    const sourceNames: string[] = [];
-
     for (const mapping of mappings) {
+      const sourceNames: string[] = [];
       const mappingId = this.getTextContent(mapping, 'id');
       const clusterId = this.getTextContent(mapping, 'cluster-id');
       const kafkaTopics = mapping['kafka-topics'];
 
       if (!mappingId || !clusterId || !kafkaTopics) {
+        this.warn('Skipped an incomplete Kafka-to-MQTT mapping.');
         continue;
       }
+      this.validateId(mappingId);
+      this.validateId(clusterId);
 
       const topics = this.getArrayContent(kafkaTopics, 'kafka-topic');
       for (const kafkaTopic of topics) {
@@ -270,12 +279,32 @@ export class KafkaConverter extends BaseConverter {
             },
           ],
           enable: true,
-          sql: `SELECT * FROM ${sourceNames.map((name) => `'${name}'`).join(',')}`,
+          sql: `SELECT * FROM ${sourceNames.map((name) => this.sqlTopic(name)).join(',')}`,
         };
         (kafkaToMqttRules as any)[ruleName] = ruleConfig;
       }
     }
 
     return { sources, kafkaToMqttRules };
+  }
+
+  private validateId(id: string): void {
+    if (
+      !/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(id) ||
+      ['constructor', 'prototype'].includes(id)
+    ) {
+      throw new Error(
+        'Kafka IDs must contain only letters, digits, underscores or hyphens and cannot be reserved property names.'
+      );
+    }
+  }
+
+  private sqlTopic(topic: string): string {
+    // EMQX rule SQL does not provide a general-purpose parameter interface.
+    if (/[\x00-\x1f'\\]/.test(topic))
+      throw new Error(
+        'Kafka rule topics containing quotes, backslashes or control characters require manual migration.'
+      );
+    return `'${topic}'`;
   }
 }

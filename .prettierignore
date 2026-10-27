@@ -1,21 +1,15 @@
-# Ignore specific JSON files that shouldn't be formatted
-package.json
-tsconfig.json
-package-lock.json
-pnpm-lock.yaml
-
-# Ignore specific directories
-node_modules/
 dist/
+node_modules/
+.pnpm-store/
+pnpm-lock.yaml
+test-results/
 coverage/
-.wrangler/
-
-# Ignore specific JSON files in extensions
-extensions/**/*.json
-
-# Ignore other files that shouldn't be formatted
-*.md
-*.xml
-*.hocon
-*.yml
-*.yaml
+LICENSE
+# Local imports and vendor schemas/examples are not source files to reformat.
+conf/
+extensions/
+import/
+etc/
+schema-en.json
+test-ci.sh
+test-emqx.sh

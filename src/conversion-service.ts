@@ -1,37 +1,40 @@
 import { XMLParserService } from './xml-parser.js';
 import { HiveMQToEMQXConverter } from './converters/hivemq-to-emqx-converter.js';
 import { HOCONGenerator } from './hocon-generator.js';
+import { EMQXConfig } from './types.js';
+
+export interface ConversionResult {
+  hocon: string;
+  warnings: { message: string }[];
+  disabledListeners: string[];
+  config?: EMQXConfig;
+  error?: string;
+}
 
 export class ConversionService {
-  private xmlParser: XMLParserService;
-  private converter: HiveMQToEMQXConverter;
-  private hoconGenerator: HOCONGenerator;
-
-  constructor() {
-    this.xmlParser = new XMLParserService();
-    this.converter = new HiveMQToEMQXConverter();
-    this.hoconGenerator = new HOCONGenerator();
-  }
-
-  convertXmlToHocon(xmlContent: string): { hocon: string; error?: string } {
+  convertXmlToHocon(xmlContent: string): ConversionResult {
     try {
-      // Parse XML
-      const hivemqConfig = this.xmlParser.parse(xmlContent);
-
-      // Convert to EMQX config
-      const emqxConfig = this.converter.convert(hivemqConfig);
-
-      // Generate HOCON
-      let hocon = this.hoconGenerator.generate(emqxConfig);
-
-      // Post-process for proper formatting
-      // hocon = this.hoconGenerator.postProcess(hocon);
-
-      return { hocon };
+      const parsed = new XMLParserService().parse(xmlContent);
+      const config = new HiveMQToEMQXConverter().convert(parsed);
+      const warnings = (config._warnings ?? []).map((message) => ({ message }));
+      const disabledListeners: string[] = [];
+      for (const [type, listeners] of Object.entries(config.listeners ?? {})) {
+        for (const [name, listener] of Object.entries(listeners)) {
+          if (!listener.enable && listener.bind)
+            disabledListeners.push(`${type}:${name}`);
+        }
+      }
+      const hocon = new HOCONGenerator().generate(config);
+      delete config._warnings;
+      return { hocon, warnings, disabledListeners, config };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown conversion error';
-      return { hocon: '', error: errorMessage };
+      return {
+        hocon: '',
+        warnings: [],
+        disabledListeners: [],
+        error:
+          error instanceof Error ? error.message : 'Unknown conversion error',
+      };
     }
   }
 }

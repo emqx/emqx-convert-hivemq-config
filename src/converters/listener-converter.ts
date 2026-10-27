@@ -1,4 +1,5 @@
 import { BaseConverter } from './base-converter.js';
+import { isIP } from 'node:net';
 import {
   HiveMQConfig,
   EMQXConfig,
@@ -19,14 +20,23 @@ export class ListenerConverter extends BaseConverter {
     }
 
     const listeners = config.hivemq.listeners;
-    result.listeners = {};
+    result.listeners = {
+      tcp: { default: { enable: false } },
+      ssl: { default: { enable: false } },
+      ws: { default: { enable: false } },
+      wss: { default: { enable: false } },
+      quic: { default: { enable: false } },
+    };
 
     // Convert TCP listeners
     if (listeners['tcp-listener']) {
       const tcpListeners = Array.isArray(listeners['tcp-listener'])
         ? listeners['tcp-listener']
         : [listeners['tcp-listener']];
-      result.listeners.tcp = this.convertTcpListeners(tcpListeners);
+      Object.assign(
+        result.listeners.tcp!,
+        this.convertTcpListeners(tcpListeners)
+      );
     }
 
     // Convert WebSocket listeners
@@ -34,7 +44,10 @@ export class ListenerConverter extends BaseConverter {
       const wsListeners = Array.isArray(listeners['websocket-listener'])
         ? listeners['websocket-listener']
         : [listeners['websocket-listener']];
-      result.listeners.ws = this.convertWebSocketListeners(wsListeners);
+      Object.assign(
+        result.listeners.ws!,
+        this.convertWebSocketListeners(wsListeners)
+      );
     }
 
     // Convert TLS TCP listeners
@@ -42,7 +55,10 @@ export class ListenerConverter extends BaseConverter {
       const tlsTcpListeners = Array.isArray(listeners['tls-tcp-listener'])
         ? listeners['tls-tcp-listener']
         : [listeners['tls-tcp-listener']];
-      result.listeners.ssl = this.convertTlsTcpListeners(tlsTcpListeners);
+      Object.assign(
+        result.listeners.ssl!,
+        this.convertTlsTcpListeners(tlsTcpListeners)
+      );
     }
 
     // Convert TLS WebSocket listeners
@@ -50,10 +66,34 @@ export class ListenerConverter extends BaseConverter {
       const tlsWsListeners = Array.isArray(listeners['tls-websocket-listener'])
         ? listeners['tls-websocket-listener']
         : [listeners['tls-websocket-listener']];
-      result.listeners.wss = this.convertTlsWebSocketListeners(tlsWsListeners);
+      Object.assign(
+        result.listeners.wss!,
+        this.convertTlsWebSocketListeners(tlsWsListeners)
+      );
     }
 
     return result;
+  }
+
+  private bind(address: string, port: string): string {
+    if (!/^\d+$/.test(port) || Number(port) < 1 || Number(port) > 65535) {
+      throw new Error('Listener ports must be integers from 1 to 65535.');
+    }
+    const host =
+      address === 'localhost' ? '127.0.0.1' : address.replace(/^\[|\]$/g, '');
+    if (!isIP(host))
+      throw new Error(
+        'Listener bind addresses must be literal IP addresses or localhost.'
+      );
+    return `${isIP(host) === 6 ? `[${host}]` : host}:${port}`;
+  }
+
+  private name(listeners: Record<string, unknown>, preferred: string): string {
+    let name = preferred;
+    for (let suffix = 2; Object.hasOwn(listeners, name); suffix++) {
+      name = `${preferred}-${suffix}`;
+    }
+    return name;
   }
 
   private convertTcpListeners(
@@ -65,11 +105,14 @@ export class ListenerConverter extends BaseConverter {
       const port = this.getTextContent(listener, 'port') || '1883';
       const bindAddress =
         this.getTextContent(listener, 'bind-address') || '0.0.0.0';
-      const listenerName = port === '1883' ? 'default' : `tcp-${port}`;
+      const listenerName = this.name(
+        result,
+        port === '1883' ? 'default' : `tcp-${port}`
+      );
 
       result[listenerName] = {
         enable: true,
-        bind: `${bindAddress}:${port}`,
+        bind: this.bind(bindAddress, port),
       };
     }
 
@@ -85,7 +128,10 @@ export class ListenerConverter extends BaseConverter {
       const port = this.getTextContent(listener, 'port') || '8000';
       const bindAddress =
         this.getTextContent(listener, 'bind-address') || '0.0.0.0';
-      const listenerName = port === '8000' ? 'default' : `ws-${port}`;
+      const listenerName = this.name(
+        result,
+        port === '8000' ? 'default' : `ws-${port}`
+      );
 
       const websocketOptions: WebSocketOptions = {
         fail_if_no_subprotocol: true,
@@ -107,7 +153,7 @@ export class ListenerConverter extends BaseConverter {
 
       result[listenerName] = {
         enable: true,
-        bind: `${bindAddress}:${port}`,
+        bind: this.bind(bindAddress, port),
         websocket: websocketOptions,
       };
     }
@@ -124,11 +170,14 @@ export class ListenerConverter extends BaseConverter {
       const port = this.getTextContent(listener, 'port') || '8883';
       const bindAddress =
         this.getTextContent(listener, 'bind-address') || '0.0.0.0';
-      const listenerName = port === '8883' ? 'default' : `ssl-${port}`;
+      const listenerName = this.name(
+        result,
+        port === '8883' ? 'default' : `ssl-${port}`
+      );
 
       const config: SslListenerConfig = {
-        enable: true,
-        bind: `${bindAddress}:${port}`,
+        enable: false,
+        bind: this.bind(bindAddress, port),
       };
 
       if (listener.tls) {
@@ -136,6 +185,9 @@ export class ListenerConverter extends BaseConverter {
       }
 
       result[listenerName] = config;
+      this.warn(
+        `TLS listener ssl:${listenerName} is disabled. Convert Java keystores to PEM, replace the certificate paths and review TLS options before enabling it.`
+      );
     }
 
     return result;
@@ -168,7 +220,10 @@ export class ListenerConverter extends BaseConverter {
       const port = this.getTextContent(listener, 'port') || '8084';
       const bindAddress =
         this.getTextContent(listener, 'bind-address') || '0.0.0.0';
-      const listenerName = port === '8084' ? 'default' : `wss-${port}`;
+      const listenerName = this.name(
+        result,
+        port === '8084' ? 'default' : `wss-${port}`
+      );
 
       const websocketOptions: WebSocketOptions = {
         fail_if_no_subprotocol: true,
@@ -189,8 +244,8 @@ export class ListenerConverter extends BaseConverter {
       }
 
       const config: WssListenerConfig = {
-        enable: true,
-        bind: `${bindAddress}:${port}`,
+        enable: false,
+        bind: this.bind(bindAddress, port),
         websocket: websocketOptions,
       };
 
@@ -199,6 +254,9 @@ export class ListenerConverter extends BaseConverter {
       }
 
       result[listenerName] = config;
+      this.warn(
+        `TLS listener wss:${listenerName} is disabled. Convert Java keystores to PEM, replace the certificate paths and review TLS options before enabling it.`
+      );
     }
 
     return result;
@@ -222,8 +280,7 @@ export class ListenerConverter extends BaseConverter {
         break;
     }
 
-    // Note: Certificate conversion from JKS to PEM is not supported in Workers
-    // Users will need to convert certificates manually
+    // File contents are never read. Certificate conversion is a manual step.
     if (tls.keystore) {
       sslOptions.keyfile = '/path/to/key.pem';
       sslOptions.certfile = '/path/to/cert.pem';

@@ -1,6 +1,8 @@
 import { HiveMQConfig, EMQXConfig } from '../types.js';
 
 export abstract class BaseConverter {
+  constructor(protected readonly warn: (message: string) => void = () => {}) {}
+
   abstract convert(config: HiveMQConfig): EMQXConfig;
 
   protected deepMerge(target: any, source: any): any {
@@ -26,7 +28,8 @@ export abstract class BaseConverter {
   }
 
   protected getTextContent(element: any, tagName: string): string | undefined {
-    if (!element || !element[tagName]) return undefined;
+    if (!element || element[tagName] === undefined || element[tagName] === null)
+      return undefined;
     const value = element[tagName];
     return typeof value === 'string' ? value.trim() : String(value);
   }

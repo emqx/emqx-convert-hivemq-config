@@ -22,8 +22,13 @@ export class MqttConverter extends BaseConverter {
       }
 
       const strategy = this.getTextContent(queuedMessages, 'strategy');
+      if (!strategy || strategy === 'discard') {
+        this.warn(
+          'HiveMQ discards new arrivals when the message queue is full; EMQX discards the oldest queued message. Review queue overflow behavior.'
+        );
+      }
       if (strategy && !['discard', 'discard-oldest'].includes(strategy)) {
-        console.warn(`Unsupported queue strategy: ${strategy}`);
+        this.warn(`Unsupported queue strategy: ${strategy}`);
       }
     }
 
@@ -46,7 +51,7 @@ export class MqttConverter extends BaseConverter {
       const messageExpiry = mqttConfig['message-expiry'];
       const maxInterval = this.getTextContent(messageExpiry, 'max-interval');
       if (maxInterval) {
-        console.warn(
+        this.warn(
           'Limiting message expiry interval for MQTTv5 publishers is not supported.'
         );
         emqxMqtt.message_expiry_interval = `${maxInterval}s`;
@@ -71,9 +76,7 @@ export class MqttConverter extends BaseConverter {
         allowUnlimited === 'false' ||
         (maxKeepAlive && maxKeepAlive !== '65535')
       ) {
-        console.warn(
-          'Limiting MQTT client keep-alive interval is not supported.'
-        );
+        this.warn('Limiting MQTT client keep-alive interval is not supported.');
       }
     }
 
@@ -94,7 +97,7 @@ export class MqttConverter extends BaseConverter {
 
     // Receive Maximum
     if (mqttConfig['receive-maximum']) {
-      console.warn('Limiting Server Receive Maximum is not supported.');
+      this.warn('Limiting Server Receive Maximum is not supported.');
     }
 
     // Quality of Service
@@ -129,7 +132,7 @@ export class MqttConverter extends BaseConverter {
       const subId = mqttConfig['subscription-identifier'];
       const enabled = this.getTextContent(subId, 'enabled');
       if (enabled === 'false') {
-        console.warn(
+        this.warn(
           'Restricting MQTTv5 Subscription Identifiers is not supported.'
         );
       }

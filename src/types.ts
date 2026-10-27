@@ -136,12 +136,14 @@ export interface ControlCenterConfig {
   };
 }
 
-export interface EMQXConfig {
+export interface EMQXConfig extends KafkaBridgeEMQXConfig {
+  _warnings?: string[];
   listeners?: {
     tcp?: Record<string, TcpListenerConfig>;
     ssl?: Record<string, SslListenerConfig>;
     ws?: Record<string, WsListenerConfig>;
     wss?: Record<string, WssListenerConfig>;
+    quic?: Record<string, { enable: boolean; bind?: string }>;
   };
   mqtt?: MqttEMQXConfig;
   cluster?: ClusterEMQXConfig;
@@ -159,28 +161,28 @@ export interface EMQXConfig {
 
 export interface TcpListenerConfig {
   enable: boolean;
-  bind: string;
+  bind?: string;
   max_connections?: number;
 }
 
 export interface SslListenerConfig {
   enable: boolean;
-  bind: string;
+  bind?: string;
   ssl_options?: SslOptions;
   max_connections?: number;
 }
 
 export interface WsListenerConfig {
   enable: boolean;
-  bind: string;
-  websocket: WebSocketOptions;
+  bind?: string;
+  websocket?: WebSocketOptions;
   max_connections?: number;
 }
 
 export interface WssListenerConfig {
   enable: boolean;
-  bind: string;
-  websocket: WebSocketOptions;
+  bind?: string;
+  websocket?: WebSocketOptions;
   ssl_options?: SslOptions;
   max_connections?: number;
 }

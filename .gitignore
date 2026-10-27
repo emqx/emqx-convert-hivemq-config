@@ -1,6 +1,31 @@
-/etc/emqx/ssl/*/*.pem
-/etc/emqx/ssl/*/*.p12
+node_modules/
+dist/
+.pnpm-store/
+test-results/
+coverage/
+*.local
+.env*
+.DS_Store
+*.tgz
+
+# Local credentials, certificate exports and generated configurations.
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+/etc/
+/import/
 /*.hocon
+/schema-en.json
 __pycache__
-/node_modules/
-/dist/
+
+# Local vendor downloads and old scratch runners. Maintained runners live in scripts/.
+/extensions/*/
+!/extensions/hivemq-kafka-extension/
+/conf/logback.xml
+/conf/tracing.xml
+/conf/tracing.xsd
+/conf/declared-shared-subscriptions.xsd
+/test-ci.sh
+/test-emqx.sh

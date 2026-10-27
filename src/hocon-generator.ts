@@ -1,78 +1,63 @@
 import { EMQXConfig } from './types.js';
 
+/** Emit literal strings and keys; user content must never become HOCON syntax. */
 export class HOCONGenerator {
   generate(config: EMQXConfig): string {
-    const lines: string[] = [];
+    const lines = [
+      '# Converted from HiveMQ XML for EMQX 6.3.2.',
+      '# Review migration notes before applying this configuration.',
+      '',
+    ];
     this.generateObject(config, lines, 0);
-    return lines.join('\n');
+    return lines.join('\n') + '\n';
   }
 
-  private generateObject(obj: any, lines: string[], indent: number): void {
-    const indentStr = '  '.repeat(indent);
-
-    // Handle warnings first
-    if (obj._warnings && Array.isArray(obj._warnings)) {
-      for (const warning of obj._warnings) {
-        lines.push(`${indentStr}# WARNING: ${warning}`);
-      }
-      lines.push(''); // Add empty line after warnings
-    }
-
-    for (const [key, value] of Object.entries(obj)) {
-      if (value === null || value === undefined || key === '_warnings') {
-        continue;
-      }
-
-      if (Array.isArray(value)) {
-        this.generateArray(key, value, lines, indent);
-      } else if (typeof value === 'object') {
-        lines.push(`${indentStr}${key} {`);
-        this.generateObject(value, lines, indent + 1);
-        lines.push(`${indentStr}}`);
-      } else if (typeof value === 'string') {
-        lines.push(`${indentStr}${key} = "${value}"`);
-      } else if (typeof value === 'boolean') {
-        lines.push(`${indentStr}${key} = ${value}`);
-      } else if (typeof value === 'number') {
-        lines.push(`${indentStr}${key} = ${value}`);
-      }
-    }
+  private key(value: string): string {
+    return /^[a-zA-Z_][a-zA-Z0-9_-]*$/.test(value)
+      ? value
+      : JSON.stringify(value);
   }
 
-  private generateArray(
-    key: string,
-    arr: any[],
+  private scalar(value: unknown): string {
+    if (typeof value === 'number' && !Number.isFinite(value)) {
+      throw new Error('Configuration contains an invalid numeric value.');
+    }
+    return JSON.stringify(value);
+  }
+
+  private generateObject(
+    obj: Record<string, any>,
     lines: string[],
     indent: number
   ): void {
-    const indentStr = '  '.repeat(indent);
-
-    if (arr.length === 0) {
-      lines.push(`${indentStr}${key} = []`);
-      return;
-    }
-
-    lines.push(`${indentStr}${key} = [`);
-
-    for (let i = 0; i < arr.length; i++) {
-      const item = arr[i];
-      if (typeof item === 'string') {
-        lines.push(`${indentStr}  "${item}"`);
-      } else if (typeof item === 'number') {
-        lines.push(`${indentStr}  ${item}`);
-      } else if (typeof item === 'boolean') {
-        lines.push(`${indentStr}  ${item}`);
-      } else if (typeof item === 'object') {
-        lines.push(`${indentStr}  {`);
-        this.generateObject(item, lines, indent + 2);
-        lines.push(`${indentStr}  }`);
+    const pad = '  '.repeat(indent);
+    if (Array.isArray(obj._warnings)) {
+      for (const warning of obj._warnings) {
+        for (const line of String(warning).split(/\r\n|\r|\n/))
+          lines.push(`${pad}# WARNING: ${line}`);
       }
-
-      if (i < arr.length - 1) {
-        lines[lines.length - 1] += ',';
-      }
+      if (obj._warnings.length) lines.push('');
     }
-
-    lines.push(`${indentStr}]`);
+    for (const [key, value] of Object.entries(obj)) {
+      if (value === undefined || value === null || key === '_warnings')
+        continue;
+      const name = this.key(key);
+      if (Array.isArray(value)) {
+        lines.push(`${pad}${name} = [`);
+        for (const [index, item] of value.entries()) {
+          const comma = index < value.length - 1 ? ',' : '';
+          if (item !== null && typeof item === 'object') {
+            lines.push(`${pad}  {`);
+            this.generateObject(item, lines, indent + 2);
+            lines.push(`${pad}  }${comma}`);
+          } else lines.push(`${pad}  ${this.scalar(item)}${comma}`);
+        }
+        lines.push(`${pad}]`);
+      } else if (typeof value === 'object') {
+        lines.push(`${pad}${name} {`);
+        this.generateObject(value, lines, indent + 1);
+        lines.push(`${pad}}`);
+      } else lines.push(`${pad}${name} = ${this.scalar(value)}`);
+    }
   }
 }

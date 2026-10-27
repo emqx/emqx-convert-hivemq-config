@@ -8,6 +8,10 @@ export class ControlCenterConverter extends BaseConverter {
     }
 
     const controlCenter = config.hivemq['control-center'];
+    this.warn(
+      'Control Center users, roles and HTTPS settings require manual migration to the EMQX Dashboard.'
+    );
+    if (this.getTextContent(controlCenter, 'enabled') === 'false') return {};
 
     if (!controlCenter.listeners?.http) {
       return {};
@@ -22,7 +26,7 @@ export class ControlCenterConverter extends BaseConverter {
     const dashboardConfig = {
       listeners: {
         http: {
-          bind: `${bindAddress}:${port}`,
+          bind: `${bindAddress === 'localhost' ? '127.0.0.1' : bindAddress}:${port}`,
         },
       },
     };

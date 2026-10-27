@@ -16,7 +16,9 @@ export class RestrictionsConverter extends BaseConverter {
     const maxConnectionsValue = restrictions['max-connections'];
     if (maxConnectionsValue !== undefined) {
       if (Number(maxConnectionsValue) === -1) {
-        warnings.push('Max connections is set to unlimited (-1). EMQX will use its default connection limits.');
+        warnings.push(
+          'Max connections is set to unlimited (-1). EMQX will use its default connection limits.'
+        );
       } else {
         maxConnections = Number(maxConnectionsValue);
       }
@@ -26,7 +28,9 @@ export class RestrictionsConverter extends BaseConverter {
     const maxClientIdLengthValue = restrictions['max-client-id-length'];
     if (maxClientIdLengthValue !== undefined) {
       if (Number(maxClientIdLengthValue) === 65535) {
-        warnings.push('Max client ID length is set to unlimited (65535). EMQX will use its default client ID length limits.');
+        warnings.push(
+          'Max client ID length is set to unlimited (65535). EMQX will use its default client ID length limits.'
+        );
       } else {
         if (!result.mqtt) {
           result.mqtt = {};
@@ -40,20 +44,18 @@ export class RestrictionsConverter extends BaseConverter {
       restrictions['incoming-bandwidth-throttling'];
     if (bandwidthThrottlingValue !== undefined) {
       if (Number(bandwidthThrottlingValue) === 0) {
-        warnings.push('Incoming bandwidth throttling is set to unlimited (0). EMQX will use its default bandwidth limits.');
+        warnings.push(
+          'Incoming bandwidth throttling is set to unlimited (0). EMQX will use its default bandwidth limits.'
+        );
       } else {
-        if (!result.mqtt) {
-          result.mqtt = {};
-        }
-        if (!result.mqtt.limiter) {
-          result.mqtt.limiter = {};
-        }
-        result.mqtt.limiter.bytes_rate = `${bandwidthThrottlingValue}b/s`;
+        warnings.push(
+          'Broker-wide incoming bandwidth throttling has no direct mapping. Configure EMQX listener/client rate limits manually.'
+        );
       }
     }
 
     // Store max connections for later use in listener converter
-    if (maxConnections) {
+    if (maxConnections !== undefined) {
       (result as any)._max_connections = maxConnections;
     }
 

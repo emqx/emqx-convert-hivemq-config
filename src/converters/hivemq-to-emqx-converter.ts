@@ -7,25 +7,43 @@ import { ControlCenterConverter } from './control-center-converter.js';
 import { KafkaConverter } from './kafka-converter.js';
 
 export class HiveMQToEMQXConverter {
-  private converters = [
-    new ListenerConverter(),
-    new MqttConverter(),
-    new RestrictionsConverter(),
-    new ClusterConverter(),
-    new ControlCenterConverter(),
-    new KafkaConverter(),
-  ];
-
   convert(config: HiveMQConfig): EMQXConfig {
     const result: EMQXConfig = {};
+    const warnings: string[] = [];
+    const warn = (message: string) => warnings.push(message);
+    const converters = [
+      new ListenerConverter(warn),
+      new MqttConverter(warn),
+      new RestrictionsConverter(warn),
+      new ClusterConverter(warn),
+      new ControlCenterConverter(warn),
+      new KafkaConverter(warn),
+    ];
 
-    for (const converter of this.converters) {
+    for (const converter of converters) {
       const converted = converter.convert(config);
       this.deepMerge(result, converted);
     }
 
     // Apply max connections from restrictions to all listeners
     this.applyMaxConnections(result);
+
+    const supported = new Set([
+      'listeners',
+      'mqtt',
+      'restrictions',
+      'cluster',
+      'control-center',
+      'kafka-configuration',
+    ]);
+    for (const section of Object.keys(config.hivemq)) {
+      if (!section.startsWith('@_') && !supported.has(section)) {
+        warn(
+          `The HiveMQ ${section} section is not converted. Migrate it manually.`
+        );
+      }
+    }
+    result._warnings = [...new Set([...(result._warnings ?? []), ...warnings])];
 
     return result;
   }
@@ -54,12 +72,10 @@ export class HiveMQToEMQXConverter {
 
   private applyMaxConnections(config: EMQXConfig): void {
     const maxConnections = (config as any)._max_connections;
-    if (!maxConnections || !config.listeners) {
+    delete (config as any)._max_connections;
+    if (maxConnections === undefined || !config.listeners) {
       return;
     }
-
-    // Remove the temporary property
-    delete (config as any)._max_connections;
 
     // Apply max connections to all listeners
     for (const listenerType in config.listeners) {
@@ -68,7 +84,7 @@ export class HiveMQToEMQXConverter {
       if (listeners && typeof listeners === 'object') {
         for (const listenerName in listeners) {
           const listener = listeners[listenerName as keyof typeof listeners];
-          if (listener && typeof listener === 'object') {
+          if (listener && typeof listener === 'object' && listener.bind) {
             (listener as any).max_connections = maxConnections;
           }
         }

@@ -1,83 +1,30 @@
 name: Test
-
 on:
+  push:
   pull_request:
-    branches:
-      - master
-
+permissions:
+  contents: read
 jobs:
   test:
-    name: test ${{ matrix.config }}
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
-        config:
-          - 'conf/config.xml'
-          - 'conf/examples/configuration/config-sample-mqtt.xml'
-          - 'conf/examples/configuration/config-sample-tcp-and-websockets.xml'
-          - 'conf/examples/configuration/config-sample-websockets.xml'
-          - 'conf/examples/configuration/cluster/config-sample-cluster-tcp.xml'
-          - 'conf/examples/configuration/controlcenter/config-sample-control-center.xml'
-          - 'conf/examples/configuration/other/config-discard-oldest-messages.xml'
-          - 'conf/examples/configuration/other/config-restrictions.xml'
-          - 'conf/examples/configuration/rest-api/config-sample-rest-api.xml'
-          - 'extensions/hivemq-kafka-extension/conf/examples/config.xml'
-          # - "conf/examples/configuration/tls/config-sample-mqtt-tls.xml"
-          # - "conf/examples/configuration/tls/config-sample-mqtt-tls-client-auth.xml"
-          # - "conf/examples/configuration/tls/config-sample-websockets-tls.xml"
-
+        node: ['22', '24']
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: '20'
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
+          node-version: ${{ matrix.node }}
+      - uses: pnpm/action-setup@v6
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm type-check
+      - run: pnpm test
+      - run: pnpm test:emqx
+        if: matrix.node == '22'
+      - uses: actions/upload-artifact@v7
+        if: always() && matrix.node == '22'
         with:
-          version: 8
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Build project
-        run: pnpm run build
-
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: 'Test ${{ matrix.config }}'
-        run: |
-          node dist/cli.js ${{ matrix.config }} > output.hocon
-          cat output.hocon
-
-          # Start EMQX container
-          docker run -d --name emqx-test \
-            -p 1883:1883 -p 8883:8883 -p 8083:8083 -p 8084:8084 -p 18083:18083 \
-            emqx/emqx-enterprise:6.0.0
-
-          # Wait for EMQX to start listening on 1883 and 18083
-          for i in {1..30}; do
-            if docker exec emqx-test emqx ctl status > /dev/null 2>&1; then
-              echo "EMQX started successfully"
-              break
-            else
-              echo "Waiting for EMQX to start..."
-              sleep 2
-            fi
-          done
-
-          # Check if container is running
-          docker ps | grep emqx-test
-
-          docker cp output.hocon emqx-test:/opt/emqx/etc/base.hocon
-          docker exec emqx-test emqx check_config
-
-      - name: Cleanup
-        if: always()
-        run: |
-          docker rm -f emqx-test || true
+          name: emqx-config-tests
+          path: test-results/emqx/
+          if-no-files-found: ignore
